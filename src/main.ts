@@ -1,5 +1,12 @@
 import "./style.css";
 import { isMuted, toggleMute, unlockAudio } from "./audio/engine";
+import {
+	isMusicOn,
+	setTempo,
+	startMusic,
+	stopMusic,
+	toggleMusic,
+} from "./audio/music";
 import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
@@ -40,16 +47,25 @@ function advance() {
 	unlockAudio();
 	if (screen === "paused") {
 		screen = "playing";
+		startMusic(false);
 	} else if (screen !== "playing") {
 		game = createGame();
 		newBest = false;
 		screen = "playing";
 		playSound("start");
+		setTempo(1);
+		startMusic(true);
 	}
+}
+
+function pause() {
+	screen = "paused";
+	stopMusic();
 }
 
 function gameOver() {
 	screen = "over";
+	stopMusic();
 	const score = scoreOf(game);
 	if (score > best) {
 		best = score;
@@ -65,6 +81,7 @@ function frame(now: number) {
 		for (const event of update(game, readInput(), dt)) {
 			playSound(event.type);
 			emit(fx, event);
+			if (event.type === "level") setTempo(game.level);
 			if (event.type === "hit") gameOver();
 		}
 	}
@@ -75,6 +92,7 @@ function frame(now: number) {
 		best,
 		newBest,
 		muted: isMuted(),
+		music: isMusicOn(),
 		fx,
 		clock: now / 1000,
 	});
@@ -87,10 +105,12 @@ window.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		advance();
 	} else if (e.code === "Escape" || e.code === "KeyP") {
-		if (screen === "playing") screen = "paused";
+		if (screen === "playing") pause();
 		else if (screen === "paused") advance();
 	} else if (e.code === "KeyM") {
 		toggleMute();
+	} else if (e.code === "KeyN") {
+		toggleMusic();
 	}
 });
 
@@ -99,7 +119,7 @@ canvas.addEventListener("pointerdown", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-	if (document.hidden && screen === "playing") screen = "paused";
+	if (document.hidden && screen === "playing") pause();
 });
 
 window.addEventListener("resize", resize);

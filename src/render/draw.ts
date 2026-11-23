@@ -14,6 +14,7 @@ export interface View {
 	best: number;
 	newBest: boolean;
 	muted: boolean;
+	music: boolean;
 	fx: Effects;
 	clock: number;
 }
@@ -191,7 +192,7 @@ function drawHud(ctx: CanvasRenderingContext2D, v: View) {
 	ctx.textAlign = "left";
 	text(
 		ctx,
-		v.muted ? "M: sound off" : "M: sound on",
+		`M sound ${v.muted ? "off" : "on"}   N music ${v.music ? "on" : "off"}`,
 		16,
 		HEIGHT - 12,
 		14,
@@ -240,7 +241,7 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 				[
 					["DODGE KING", 64, COLORS.crown],
 					["Move: WASD, arrow keys, or drag", 18, COLORS.dim],
-					["Esc: pause   M: mute", 18, COLORS.dim],
+					["Esc: pause   M: sound   N: music", 18, COLORS.dim],
 					["Press Enter or tap to start", 22],
 				],
 				40,
