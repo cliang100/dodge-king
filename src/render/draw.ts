@@ -2,6 +2,8 @@ import type { GameState, Pickup, Player } from "../game/game";
 import { scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { HEIGHT, WIDTH } from "../game/world";
+import * as sprites from "./sprites";
+import { drawSprite } from "./sprites";
 
 export type Screen = "title" | "playing" | "paused" | "over";
 
@@ -18,10 +20,6 @@ const COLORS = {
 	grid: "#1c1a2b",
 	robe: "#e07a5f",
 	crown: "#ffb627",
-	arrow: "#e8e8e8",
-	boulder: "#8d8d99",
-	boulderEdge: "#5c5c66",
-	bat: "#a46cf2",
 	coin: "#ffd23f",
 	shield: "#4cc9f0",
 	text: "#f5f5f5",
@@ -60,95 +58,33 @@ function drawBackground(ctx: CanvasRenderingContext2D) {
 
 function drawPlayer(ctx: CanvasRenderingContext2D, p: Player, time: number) {
 	if (p.invulnerable > 0 && Math.floor(time * 20) % 2 === 0) return;
-	const { x, y, r } = p;
-	ctx.fillStyle = COLORS.robe;
-	circle(ctx, x, y, r);
-	ctx.fill();
-
-	ctx.fillStyle = COLORS.crown;
-	ctx.beginPath();
-	ctx.moveTo(x - 10, y - 8);
-	ctx.lineTo(x - 10, y - 20);
-	ctx.lineTo(x - 5, y - 13);
-	ctx.lineTo(x, y - 22);
-	ctx.lineTo(x + 5, y - 13);
-	ctx.lineTo(x + 10, y - 20);
-	ctx.lineTo(x + 10, y - 8);
-	ctx.closePath();
-	ctx.fill();
-
+	drawSprite(ctx, sprites.king, p.x, p.y - 4, 2.25);
 	if (p.shield) {
 		ctx.strokeStyle = COLORS.shield;
 		ctx.lineWidth = 2;
-		circle(ctx, x, y, r + 8);
+		circle(ctx, p.x, p.y, p.r + 10);
 		ctx.stroke();
 	}
 }
 
-function drawHazard(ctx: CanvasRenderingContext2D, h: Hazard, time: number) {
+function drawHazard(ctx: CanvasRenderingContext2D, h: Hazard) {
 	switch (h.kind) {
-		case "arrow": {
-			ctx.save();
-			ctx.translate(h.x, h.y);
-			ctx.rotate(Math.atan2(h.vy, h.vx));
-			ctx.strokeStyle = COLORS.arrow;
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.moveTo(-14, 0);
-			ctx.lineTo(4, 0);
-			ctx.stroke();
-			ctx.fillStyle = COLORS.arrow;
-			ctx.beginPath();
-			ctx.moveTo(10, 0);
-			ctx.lineTo(2, -5);
-			ctx.lineTo(2, 5);
-			ctx.closePath();
-			ctx.fill();
-			ctx.restore();
+		case "arrow":
+			drawSprite(ctx, sprites.arrow, h.x, h.y, 2, Math.atan2(h.vy, h.vx));
 			break;
-		}
 		case "boulder":
-			ctx.fillStyle = COLORS.boulder;
-			ctx.strokeStyle = COLORS.boulderEdge;
-			ctx.lineWidth = 3;
-			circle(ctx, h.x, h.y, h.r);
-			ctx.fill();
-			ctx.stroke();
+			drawSprite(ctx, sprites.boulder, h.x, h.y, 2.25);
 			break;
-		case "bat": {
-			const flap = Math.sin(time * 20) * 5;
-			ctx.fillStyle = COLORS.bat;
-			ctx.beginPath();
-			ctx.moveTo(h.x - 4, h.y);
-			ctx.lineTo(h.x - 20, h.y - 6 + flap);
-			ctx.lineTo(h.x - 12, h.y + 4);
-			ctx.moveTo(h.x + 4, h.y);
-			ctx.lineTo(h.x + 20, h.y - 6 + flap);
-			ctx.lineTo(h.x + 12, h.y + 4);
-			ctx.fill();
-			circle(ctx, h.x, h.y, h.r - 2);
-			ctx.fill();
+		case "bat":
+			drawSprite(ctx, sprites.bat, h.x, h.y, 2);
 			break;
-		}
 	}
 }
 
 function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
 	if (p.ttl < 1.5 && Math.floor(time * 8) % 2 === 0) return;
-	const color = p.kind === "coin" ? COLORS.coin : COLORS.shield;
-	ctx.strokeStyle = color;
-	ctx.fillStyle = color;
-	ctx.lineWidth = 2;
-	circle(ctx, p.x, p.y, p.r);
-	if (p.kind === "coin") ctx.fill();
-	else ctx.stroke();
-	circle(ctx, p.x, p.y, p.r / 2);
-	if (p.kind === "coin") {
-		ctx.strokeStyle = COLORS.bg;
-		ctx.stroke();
-	} else {
-		ctx.fill();
-	}
+	const sprite = p.kind === "coin" ? sprites.coin : sprites.shield;
+	drawSprite(ctx, sprite, p.x, p.y, 2.5);
 }
 
 function text(
@@ -201,9 +137,10 @@ function drawOverlay(
 
 export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	const { game } = v;
+	ctx.imageSmoothingEnabled = false;
 	drawBackground(ctx);
 	for (const p of game.pickups) drawPickup(ctx, p, game.time);
-	for (const h of game.hazards) drawHazard(ctx, h, game.time);
+	for (const h of game.hazards) drawHazard(ctx, h);
 	drawPlayer(ctx, game.player, game.time);
 	drawHud(ctx, v);
 
