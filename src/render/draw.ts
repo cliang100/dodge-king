@@ -2,7 +2,7 @@ import type { GameState, Pickup, Player } from "../game/game";
 import { scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
-import type { Effects } from "./effects";
+import { BANNER_TIME, type Effects } from "./effects";
 import * as sprites from "./sprites";
 import { drawSprite } from "./sprites";
 
@@ -15,6 +15,7 @@ export interface View {
 	newBest: boolean;
 	muted: boolean;
 	fx: Effects;
+	clock: number;
 }
 
 const COLORS = {
@@ -24,7 +25,8 @@ const COLORS = {
 	shield: "#4cc9f0",
 	text: "#f5f5f5",
 	dim: "#9a96b0",
-	overlay: "rgba(10, 9, 18, 0.72)",
+	overlay: "rgba(10, 9, 18, 0.6)",
+	outline: "rgba(10, 9, 18, 0.75)",
 };
 
 const FONT = "ui-monospace, Menlo, Consolas, monospace";
@@ -136,14 +138,9 @@ function drawEffects(ctx: CanvasRenderingContext2D, fx: Effects) {
 	}
 	ctx.textAlign = "center";
 	ctx.textBaseline = "middle";
-	ctx.font = `bold 18px ${FONT}`;
-	ctx.lineWidth = 4;
-	ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
 	for (const t of fx.texts) {
 		ctx.globalAlpha = Math.min(1, t.life * 2);
-		ctx.strokeText(t.text, t.x, t.y);
-		ctx.fillStyle = t.color;
-		ctx.fillText(t.text, t.x, t.y);
+		text(ctx, t.text, t.x, t.y, 18, t.color);
 	}
 	ctx.globalAlpha = 1;
 }
@@ -156,9 +153,30 @@ function text(
 	size: number,
 	color = COLORS.text,
 ) {
-	ctx.fillStyle = color;
 	ctx.font = `bold ${size}px ${FONT}`;
+	ctx.lineWidth = Math.max(3, size / 6);
+	ctx.lineJoin = "round";
+	ctx.strokeStyle = COLORS.outline;
+	ctx.strokeText(value, x, y);
+	ctx.fillStyle = color;
 	ctx.fillText(value, x, y);
+}
+
+function drawBanner(ctx: CanvasRenderingContext2D, level: number, t: number) {
+	const elapsed = BANNER_TIME - t;
+	const pop = Math.min(1, elapsed * 6);
+	ctx.globalAlpha = Math.min(1, t * 2);
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	text(
+		ctx,
+		`LEVEL ${level}`,
+		WIDTH / 2,
+		HEIGHT / 3,
+		40 + 24 * pop,
+		COLORS.crown,
+	);
+	ctx.globalAlpha = 1;
 }
 
 function drawHud(ctx: CanvasRenderingContext2D, v: View) {
@@ -184,12 +202,13 @@ function drawHud(ctx: CanvasRenderingContext2D, v: View) {
 function drawOverlay(
 	ctx: CanvasRenderingContext2D,
 	lines: [string, number, string?][],
+	offset = 0,
 ) {
 	ctx.fillStyle = COLORS.overlay;
 	ctx.fillRect(0, 0, WIDTH, HEIGHT);
 	ctx.textAlign = "center";
 	ctx.textBaseline = "middle";
-	let y = HEIGHT / 2 - (lines.length - 1) * 24;
+	let y = HEIGHT / 2 - (lines.length - 1) * 24 + offset;
 	for (const [value, size, color] of lines) {
 		text(ctx, value, WIDTH / 2, y, size, color);
 		y += 48;
@@ -212,15 +231,27 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	drawEffects(ctx, v.fx);
 	ctx.restore();
 	drawHud(ctx, v);
+	if (v.fx.banner > 0) drawBanner(ctx, game.level, v.fx.banner);
 
 	switch (v.screen) {
 		case "title":
-			drawOverlay(ctx, [
-				["DODGE KING", 56, COLORS.crown],
-				["Move: WASD, arrow keys, or drag", 18, COLORS.dim],
-				["Esc: pause   M: mute", 18, COLORS.dim],
-				["Press Enter or tap to start", 22],
-			]);
+			drawOverlay(
+				ctx,
+				[
+					["DODGE KING", 64, COLORS.crown],
+					["Move: WASD, arrow keys, or drag", 18, COLORS.dim],
+					["Esc: pause   M: mute", 18, COLORS.dim],
+					["Press Enter or tap to start", 22],
+				],
+				40,
+			);
+			drawSprite(
+				ctx,
+				sprites.kingIdle,
+				WIDTH / 2,
+				160 + Math.sin(v.clock * 3) * 6,
+				5,
+			);
 			break;
 		case "paused":
 			drawOverlay(ctx, [

@@ -22,6 +22,14 @@ describe("effects", () => {
 		expect(fx.shake).toBe(0);
 	});
 
+	it("shows a banner on level up", () => {
+		const fx = createEffects(false);
+		emit(fx, { type: "level", x: 0, y: 0 }, rng);
+		expect(fx.banner).toBeGreaterThan(0);
+		stepEffects(fx, 2);
+		expect(fx.banner).toBe(0);
+	});
+
 	it("skips shake when reduced motion is preferred", () => {
 		const fx = createEffects(true);
 		emit(fx, { type: "hit", x: 0, y: 0 }, rng);

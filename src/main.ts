@@ -68,7 +68,15 @@ function frame(now: number) {
 		}
 	}
 	if (screen !== "paused") stepEffects(fx, dt);
-	draw(ctx, { screen, game, best, newBest, muted: isMuted(), fx });
+	draw(ctx, {
+		screen,
+		game,
+		best,
+		newBest,
+		muted: isMuted(),
+		fx,
+		clock: now / 1000,
+	});
 	requestAnimationFrame(frame);
 }
 

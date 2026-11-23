@@ -24,6 +24,7 @@ export interface Effects {
 	particles: Particle[];
 	texts: FloatingText[];
 	shake: number;
+	banner: number;
 	reduceMotion: boolean;
 }
 
@@ -62,11 +63,13 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 
 const GRAVITY = 300;
 const SHAKE_DECAY = 30;
+export const BANNER_TIME = 1.6;
 
 export const createEffects = (reduceMotion: boolean): Effects => ({
 	particles: [],
 	texts: [],
 	shake: 0,
+	banner: 0,
 	reduceMotion,
 });
 
@@ -96,6 +99,7 @@ export function emit(fx: Effects, event: GameEvent, rng: Rng = Math.random) {
 			color: burst.colors[0] ?? "#fff",
 		});
 	}
+	if (event.type === "level") fx.banner = BANNER_TIME;
 	if (!fx.reduceMotion) fx.shake = Math.max(fx.shake, burst.shake);
 }
 
@@ -113,4 +117,5 @@ export function stepEffects(fx: Effects, dt: number) {
 	fx.particles = fx.particles.filter((p) => p.life > 0);
 	fx.texts = fx.texts.filter((t) => t.life > 0);
 	fx.shake = Math.max(0, fx.shake - SHAKE_DECAY * dt);
+	fx.banner = Math.max(0, fx.banner - dt);
 }
