@@ -1,5 +1,6 @@
 import "./style.css";
-import { isMuted, playSound, toggleMute, unlockAudio } from "./audio/sfx";
+import { isMuted, toggleMute, unlockAudio } from "./audio/engine";
+import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
 import { bindInput } from "./input/input";

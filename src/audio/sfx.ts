@@ -1,23 +1,5 @@
 import type { GameEvent } from "../game/game";
-import { load, save } from "../storage";
-
-const MUTE_KEY = "dodge-king:muted";
-
-let ctx: AudioContext | null = null;
-let muted = load(MUTE_KEY) === "1";
-
-// Browsers only allow audio after a user gesture, so this is called from input handlers.
-export function unlockAudio() {
-	ctx ??= new AudioContext();
-	if (ctx.state === "suspended") void ctx.resume();
-}
-
-export const isMuted = () => muted;
-
-export function toggleMute() {
-	muted = !muted;
-	save(MUTE_KEY, muted ? "1" : "0");
-}
+import { getEngine } from "./engine";
 
 function tone(
 	freq: number,
@@ -26,7 +8,9 @@ function tone(
 	endFreq = freq,
 	delay = 0,
 ) {
-	if (!ctx || muted) return;
+	const engine = getEngine();
+	if (!engine) return;
+	const { ctx } = engine;
 	const t = ctx.currentTime + delay;
 	const osc = ctx.createOscillator();
 	const gain = ctx.createGain();
@@ -35,7 +19,7 @@ function tone(
 	osc.frequency.exponentialRampToValueAtTime(endFreq, t + duration);
 	gain.gain.setValueAtTime(0.12, t);
 	gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
-	osc.connect(gain).connect(ctx.destination);
+	osc.connect(gain).connect(engine.sfx);
 	osc.start(t);
 	osc.stop(t + duration);
 }
