@@ -56,14 +56,23 @@ function drawBackground(ctx: CanvasRenderingContext2D) {
 	ctx.stroke();
 }
 
+const frame = <T>(frames: T[], t: number) =>
+	frames[Math.floor(t) % frames.length] as T;
+
 function drawPlayer(ctx: CanvasRenderingContext2D, p: Player, time: number) {
 	if (p.invulnerable > 0 && Math.floor(time * 20) % 2 === 0) return;
-	drawSprite(ctx, sprites.king, p.x, p.y - 4, 2.25);
+	const sprite = p.moving
+		? frame(sprites.kingWalk, time * 8)
+		: sprites.kingIdle;
+	const bob = p.moving ? Math.abs(Math.sin(time * 16)) * 2 : Math.sin(time * 3);
+	drawSprite(ctx, sprite, p.x, p.y - 4 - bob, 2.25);
 	if (p.shield) {
 		ctx.strokeStyle = COLORS.shield;
 		ctx.lineWidth = 2;
+		ctx.globalAlpha = 0.6 + Math.sin(time * 6) * 0.3;
 		circle(ctx, p.x, p.y, p.r + 10);
 		ctx.stroke();
+		ctx.globalAlpha = 1;
 	}
 }
 
@@ -73,18 +82,21 @@ function drawHazard(ctx: CanvasRenderingContext2D, h: Hazard) {
 			drawSprite(ctx, sprites.arrow, h.x, h.y, 2, Math.atan2(h.vy, h.vx));
 			break;
 		case "boulder":
-			drawSprite(ctx, sprites.boulder, h.x, h.y, 2.25);
+			// Spin from position so rotation stays continuous through wall bounces.
+			drawSprite(ctx, sprites.boulder, h.x, h.y, 2.25, (h.x + h.y) / h.r);
 			break;
 		case "bat":
-			drawSprite(ctx, sprites.bat, h.x, h.y, 2);
+			drawSprite(ctx, frame(sprites.bat, h.ttl * 10), h.x, h.y, 2);
 			break;
 	}
 }
 
 function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
 	if (p.ttl < 1.5 && Math.floor(time * 8) % 2 === 0) return;
-	const sprite = p.kind === "coin" ? sprites.coin : sprites.shield;
-	drawSprite(ctx, sprite, p.x, p.y, 2.5);
+	const bob = Math.sin(time * 4 + p.x) * 2;
+	const sprite =
+		p.kind === "coin" ? frame(sprites.coin, p.ttl * 8) : sprites.shield;
+	drawSprite(ctx, sprite, p.x, p.y + bob, 2.5);
 }
 
 function text(

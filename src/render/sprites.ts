@@ -39,7 +39,7 @@ function build(rows: string[]): Sprite {
 	return canvas;
 }
 
-export const king = build([
+const kingBody = [
 	"....y..yy..y....",
 	"....yy.yy.yy....",
 	"....yyyyyyyy....",
@@ -54,20 +54,41 @@ export const king = build([
 	"..ssrrrwwrrrss..",
 	"...rrrrwwrrrr...",
 	"...RRRRRRRRRR...",
+];
+
+export const kingIdle = build([
+	...kingBody,
 	"....bb....bb....",
 	"....bb....bb....",
 ]);
 
-export const bat = build([
-	"P..........P",
-	"PP..p..p..PP",
-	"PpP.pppp.PpP",
-	"PpppwppwpppP",
-	".PPppppppPP.",
-	"...PppppP...",
-	"....P..P....",
-	"............",
-]);
+export const kingWalk = [
+	build([...kingBody, "....bb....bb....", "..........bb...."]),
+	build([...kingBody, "....bb....bb....", "....bb.........."]),
+];
+
+export const bat = [
+	build([
+		"P..........P",
+		"PP..p..p..PP",
+		"PpP.pppp.PpP",
+		"PpppwppwpppP",
+		".PPppppppPP.",
+		"...PppppP...",
+		"....P..P....",
+		"............",
+	]),
+	build([
+		"............",
+		"....p..p....",
+		"....pppp....",
+		"...pwppwp...",
+		".PPppppppPP.",
+		"PppPppppPppP",
+		"PpP.PppP.PpP",
+		"P...P..P...P",
+	]),
+];
 
 export const boulder = build([
 	".....gggggg.....",
@@ -96,7 +117,7 @@ export const arrow = build([
 	"ff........m...",
 ]);
 
-export const coin = build([
+const coinFull = build([
 	"..YYYY..",
 	".YyyyyY.",
 	"YyywyyyY",
@@ -106,6 +127,30 @@ export const coin = build([
 	".YyyyyY.",
 	"..YYYY..",
 ]);
+
+const coinHalf = build([
+	"...YY...",
+	"..YyyY..",
+	"..YwyY..",
+	"..YyyY..",
+	"..YyyY..",
+	"..YyyY..",
+	"..YyyY..",
+	"...YY...",
+]);
+
+const coinEdge = build([
+	"...YY...",
+	"...YY...",
+	"...YY...",
+	"...YY...",
+	"...YY...",
+	"...YY...",
+	"...YY...",
+	"...YY...",
+]);
+
+export const coin = [coinFull, coinHalf, coinEdge, coinHalf];
 
 export const shield = build([
 	"..cccccc..",

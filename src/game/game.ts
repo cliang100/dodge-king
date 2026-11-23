@@ -18,6 +18,7 @@ const INVULNERABLE_TIME = 1;
 export interface Player extends Circle {
 	shield: boolean;
 	invulnerable: number;
+	moving: boolean;
 }
 
 export interface Pickup extends Circle {
@@ -59,6 +60,7 @@ export function createGame(): GameState {
 			r: 14,
 			shield: false,
 			invulnerable: 0,
+			moving: false,
 		},
 		hazards: [],
 		pickups: [],
@@ -80,6 +82,7 @@ function movePlayer(p: Player, input: Input, dt: number) {
 	const dx = input.target ? input.target.x - p.x : input.dx;
 	const dy = input.target ? input.target.y - p.y : input.dy;
 	const len = Math.hypot(dx, dy);
+	p.moving = len > 1;
 	if (len > 0) {
 		const step = PLAYER_SPEED * dt;
 		const k = (input.target ? Math.min(step, len) : step) / len;
