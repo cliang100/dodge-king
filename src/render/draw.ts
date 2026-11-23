@@ -2,6 +2,7 @@ import type { GameState, Pickup, Player } from "../game/game";
 import { scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
+import type { Effects } from "./effects";
 import * as sprites from "./sprites";
 import { drawSprite } from "./sprites";
 
@@ -13,6 +14,7 @@ export interface View {
 	best: number;
 	newBest: boolean;
 	muted: boolean;
+	fx: Effects;
 }
 
 const COLORS = {
@@ -126,6 +128,26 @@ function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
 	drawSprite(ctx, sprite, p.x, p.y + bob, 2.5);
 }
 
+function drawEffects(ctx: CanvasRenderingContext2D, fx: Effects) {
+	for (const p of fx.particles) {
+		ctx.globalAlpha = p.life / p.maxLife;
+		ctx.fillStyle = p.color;
+		ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+	}
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	ctx.font = `bold 18px ${FONT}`;
+	ctx.lineWidth = 4;
+	ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+	for (const t of fx.texts) {
+		ctx.globalAlpha = Math.min(1, t.life * 2);
+		ctx.strokeText(t.text, t.x, t.y);
+		ctx.fillStyle = t.color;
+		ctx.fillText(t.text, t.x, t.y);
+	}
+	ctx.globalAlpha = 1;
+}
+
 function text(
 	ctx: CanvasRenderingContext2D,
 	value: string,
@@ -176,14 +198,19 @@ function drawOverlay(
 
 export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	const { game } = v;
+	const alive = v.screen !== "over";
+	const shake = v.fx.shake;
 	ctx.imageSmoothingEnabled = false;
+	ctx.save();
+	ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
 	drawBackground(ctx, game.level);
-	for (const c of [...game.pickups, ...game.hazards, game.player]) {
-		drawShadow(ctx, c);
-	}
+	for (const c of [...game.pickups, ...game.hazards]) drawShadow(ctx, c);
+	if (alive) drawShadow(ctx, game.player);
 	for (const p of game.pickups) drawPickup(ctx, p, game.time);
 	for (const h of game.hazards) drawHazard(ctx, h);
-	drawPlayer(ctx, game.player, game.time);
+	if (alive) drawPlayer(ctx, game.player, game.time);
+	drawEffects(ctx, v.fx);
+	ctx.restore();
 	drawHud(ctx, v);
 
 	switch (v.screen) {

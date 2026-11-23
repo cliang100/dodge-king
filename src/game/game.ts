@@ -9,7 +9,7 @@ import { type Circle, HEIGHT, type Rng, WIDTH } from "./world";
 
 const PLAYER_SPEED = 260;
 const LEVEL_TIME = 15;
-const COIN_POINTS = 50;
+export const COIN_POINTS = 50;
 const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
 const SHIELD_CHANCE = 0.12;
