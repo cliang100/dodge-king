@@ -40,7 +40,7 @@ function tone(
 	osc.stop(t + duration);
 }
 
-const sounds: Record<GameEvent | "start", () => void> = {
+const sounds: Record<GameEvent["type"] | "start", () => void> = {
 	start: () => tone(440, 0.15, "square", 880),
 	coin: () => {
 		tone(988, 0.06);
@@ -55,4 +55,4 @@ const sounds: Record<GameEvent | "start", () => void> = {
 	},
 };
 
-export const playSound = (name: GameEvent | "start") => sounds[name]();
+export const playSound = (name: GameEvent["type"] | "start") => sounds[name]();

@@ -31,7 +31,11 @@ export interface Input {
 	target: { x: number; y: number } | null;
 }
 
-export type GameEvent = "coin" | "shield" | "block" | "hit" | "level";
+export interface GameEvent {
+	type: "coin" | "shield" | "block" | "hit" | "level";
+	x: number;
+	y: number;
+}
 
 export interface GameState {
 	time: number;
@@ -115,7 +119,7 @@ export function update(
 	const level = levelAt(s.time);
 	if (level > s.level) {
 		s.level = level;
-		events.push("level");
+		events.push({ type: "level", x: player.x, y: player.y });
 	}
 
 	movePlayer(player, input, dt);
@@ -141,7 +145,7 @@ export function update(
 		if (!overlaps(player, p)) return p.ttl > 0;
 		if (p.kind === "coin") s.coins++;
 		else player.shield = true;
-		events.push(p.kind);
+		events.push({ type: p.kind, x: p.x, y: p.y });
 		return false;
 	});
 
@@ -152,9 +156,9 @@ export function update(
 		player.shield = false;
 		player.invulnerable = INVULNERABLE_TIME;
 		s.hazards = s.hazards.filter((h) => h !== hit);
-		events.push("block");
+		events.push({ type: "block", x: player.x, y: player.y });
 	} else {
-		events.push("hit");
+		events.push({ type: "hit", x: player.x, y: player.y });
 	}
 	return events;
 }

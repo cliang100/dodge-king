@@ -58,8 +58,8 @@ function frame(now: number) {
 	last = now;
 	if (screen === "playing") {
 		for (const event of update(game, readInput(), dt)) {
-			playSound(event);
-			if (event === "hit") gameOver();
+			playSound(event.type);
+			if (event.type === "hit") gameOver();
 		}
 	}
 	draw(ctx, { screen, game, best, newBest, muted: isMuted() });
