@@ -1,7 +1,7 @@
 import type { GameState, Pickup, Player } from "../game/game";
 import { scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
-import { HEIGHT, WIDTH } from "../game/world";
+import { type Circle, HEIGHT, WIDTH } from "../game/world";
 import * as sprites from "./sprites";
 import { drawSprite } from "./sprites";
 
@@ -16,8 +16,6 @@ export interface View {
 }
 
 const COLORS = {
-	bg: "#14121f",
-	grid: "#1c1a2b",
 	robe: "#e07a5f",
 	crown: "#ffb627",
 	coin: "#ffd23f",
@@ -39,25 +37,54 @@ function circle(
 	ctx.arc(x, y, r, 0, Math.PI * 2);
 }
 
-function drawBackground(ctx: CanvasRenderingContext2D) {
-	ctx.fillStyle = COLORS.bg;
-	ctx.fillRect(0, 0, WIDTH, HEIGHT);
-	ctx.strokeStyle = COLORS.grid;
-	ctx.lineWidth = 1;
-	ctx.beginPath();
-	for (let x = 40; x < WIDTH; x += 40) {
-		ctx.moveTo(x, 0);
-		ctx.lineTo(x, HEIGHT);
-	}
-	for (let y = 40; y < HEIGHT; y += 40) {
-		ctx.moveTo(0, y);
-		ctx.lineTo(WIDTH, y);
-	}
-	ctx.stroke();
-}
+const THEMES: [string, string][] = [
+	["#2a1a5e", "#5b3a9e"],
+	["#0d3b4f", "#1f8a8a"],
+	["#4a1538", "#b0406a"],
+	["#123d24", "#3c9a52"],
+	["#4a2410", "#c4682a"],
+	["#0f1f4f", "#3a62c4"],
+];
+const TILE = 40;
 
 const frame = <T>(frames: T[], t: number) =>
 	frames[Math.floor(t) % frames.length] as T;
+
+function drawBackground(ctx: CanvasRenderingContext2D, level: number) {
+	const [top, bottom] = frame(THEMES, level - 1);
+	const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+	sky.addColorStop(0, top);
+	sky.addColorStop(1, bottom);
+	ctx.fillStyle = sky;
+	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+	ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+	for (let y = 0; y < HEIGHT; y += TILE) {
+		for (let x = ((y / TILE) % 2) * TILE; x < WIDTH; x += TILE * 2) {
+			ctx.fillRect(x, y, TILE, TILE);
+		}
+	}
+
+	const vignette = ctx.createRadialGradient(
+		WIDTH / 2,
+		HEIGHT / 2,
+		HEIGHT / 3,
+		WIDTH / 2,
+		HEIGHT / 2,
+		WIDTH * 0.7,
+	);
+	vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+	vignette.addColorStop(1, "rgba(0, 0, 0, 0.45)");
+	ctx.fillStyle = vignette;
+	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+}
+
+function drawShadow(ctx: CanvasRenderingContext2D, c: Circle) {
+	ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+	ctx.beginPath();
+	ctx.ellipse(c.x, c.y + c.r + 4, c.r, c.r / 3, 0, 0, Math.PI * 2);
+	ctx.fill();
+}
 
 function drawPlayer(ctx: CanvasRenderingContext2D, p: Player, time: number) {
 	if (p.invulnerable > 0 && Math.floor(time * 20) % 2 === 0) return;
@@ -150,7 +177,10 @@ function drawOverlay(
 export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	const { game } = v;
 	ctx.imageSmoothingEnabled = false;
-	drawBackground(ctx);
+	drawBackground(ctx, game.level);
+	for (const c of [...game.pickups, ...game.hazards, game.player]) {
+		drawShadow(ctx, c);
+	}
 	for (const p of game.pickups) drawPickup(ctx, p, game.time);
 	for (const h of game.hazards) drawHazard(ctx, h);
 	drawPlayer(ctx, game.player, game.time);
