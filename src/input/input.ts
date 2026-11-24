@@ -9,7 +9,8 @@ const MOVE_KEYS = new Set([...LEFT, ...RIGHT, ...UP, ...DOWN]);
 
 export function bindInput(canvas: HTMLCanvasElement): () => Input {
 	const keys = new Set<string>();
-	let target: Input["target"] = null;
+	let pointer: { x: number; y: number } | null = null;
+	let drag = { x: 0, y: 0 };
 
 	const held = (codes: string[]) => (codes.some((c) => keys.has(c)) ? 1 : 0);
 
@@ -30,20 +31,28 @@ export function bindInput(canvas: HTMLCanvasElement): () => Input {
 
 	canvas.addEventListener("pointerdown", (e) => {
 		canvas.setPointerCapture(e.pointerId);
-		target = toWorld(e);
+		pointer = toWorld(e);
 	});
 	canvas.addEventListener("pointermove", (e) => {
-		if (target) target = toWorld(e);
+		if (!pointer) return;
+		const next = toWorld(e);
+		drag.x += next.x - pointer.x;
+		drag.y += next.y - pointer.y;
+		pointer = next;
 	});
 	const release = () => {
-		target = null;
+		pointer = null;
 	};
 	canvas.addEventListener("pointerup", release);
 	canvas.addEventListener("pointercancel", release);
 
-	return () => ({
-		dx: held(RIGHT) - held(LEFT),
-		dy: held(DOWN) - held(UP),
-		target,
-	});
+	return () => {
+		const input = {
+			dx: held(RIGHT) - held(LEFT),
+			dy: held(DOWN) - held(UP),
+			drag,
+		};
+		drag = { x: 0, y: 0 };
+		return input;
+	};
 }

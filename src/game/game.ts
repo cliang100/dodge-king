@@ -8,6 +8,7 @@ import {
 import { type Circle, HEIGHT, type Rng, WIDTH } from "./world";
 
 const PLAYER_SPEED = 260;
+const DRAG_SPEED = 900;
 const LEVEL_TIME = 15;
 export const COIN_POINTS = 50;
 const PICKUP_INTERVAL = 2.5;
@@ -29,7 +30,7 @@ export interface Pickup extends Circle {
 export interface Input {
 	dx: number;
 	dy: number;
-	target: { x: number; y: number } | null;
+	drag: { x: number; y: number };
 }
 
 export interface GameEvent {
@@ -79,16 +80,19 @@ const clamp = (v: number, min: number, max: number) =>
 	Math.min(max, Math.max(min, v));
 
 function movePlayer(p: Player, input: Input, dt: number) {
-	const dx = input.target ? input.target.x - p.x : input.dx;
-	const dy = input.target ? input.target.y - p.y : input.dy;
-	const len = Math.hypot(dx, dy);
-	p.moving = len > 1;
-	if (len > 0) {
-		const step = PLAYER_SPEED * dt;
-		const k = (input.target ? Math.min(step, len) : step) / len;
-		p.x += dx * k;
-		p.y += dy * k;
+	const { drag } = input;
+	const dragLen = Math.hypot(drag.x, drag.y);
+	const keyLen = Math.hypot(input.dx, input.dy);
+	if (dragLen > 0) {
+		const k = Math.min(1, (DRAG_SPEED * dt) / dragLen);
+		p.x += drag.x * k;
+		p.y += drag.y * k;
+	} else if (keyLen > 0) {
+		const k = (PLAYER_SPEED * dt) / keyLen;
+		p.x += input.dx * k;
+		p.y += input.dy * k;
 	}
+	p.moving = dragLen > 0.5 || keyLen > 0;
 	p.x = clamp(p.x, p.r, WIDTH - p.r);
 	p.y = clamp(p.y, p.r, HEIGHT - p.r);
 	p.invulnerable = Math.max(0, p.invulnerable - dt);

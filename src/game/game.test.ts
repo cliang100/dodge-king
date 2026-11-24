@@ -17,7 +17,7 @@ import {
 } from "./hazards";
 import { HEIGHT, WIDTH } from "./world";
 
-const idle: Input = { dx: 0, dy: 0, target: null };
+const idle: Input = { dx: 0, dy: 0, drag: { x: 0, y: 0 } };
 const rng = () => 0.5;
 const types = (events: GameEvent[]) => events.map((e) => e.type);
 
@@ -39,16 +39,18 @@ describe("game", () => {
 	it("keeps the player inside the arena", () => {
 		const s = createGame();
 		for (let i = 0; i < 200; i++)
-			update(s, { dx: 1, dy: -1, target: null }, 0.05, rng);
+			update(s, { ...idle, dx: 1, dy: -1 }, 0.05, rng);
 		expect(s.player.x).toBe(WIDTH - s.player.r);
 		expect(s.player.y).toBe(s.player.r);
 	});
 
-	it("moves toward a pointer target without overshooting", () => {
+	it("follows drag movement, capped per frame", () => {
 		const s = createGame();
-		const target = { x: s.player.x + 2, y: s.player.y };
-		update(s, { dx: 0, dy: 0, target }, 0.1, rng);
-		expect(s.player.x).toBeCloseTo(target.x);
+		const x = s.player.x;
+		update(s, { ...idle, drag: { x: 5, y: 0 } }, 0.1, rng);
+		expect(s.player.x).toBeCloseTo(x + 5);
+		update(s, { ...idle, drag: { x: 1000, y: 0 } }, 0.1, rng);
+		expect(s.player.x).toBeCloseTo(x + 5 + 90);
 	});
 
 	it("collects coins for points", () => {
