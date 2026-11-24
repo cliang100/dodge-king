@@ -11,7 +11,6 @@ import {
 import { type Circle, HEIGHT, overlaps, type Rng, WIDTH } from "./world";
 
 const PLAYER_SPEED = 260;
-const DRAG_SPEED = 900;
 const DASH_SPEED = 800;
 const DASH_TIME = 0.15;
 export const DASH_COOLDOWN = 1.2;
@@ -51,7 +50,6 @@ export interface Pickup extends Circle {
 export interface Input {
 	dx: number;
 	dy: number;
-	drag: { x: number; y: number };
 	dash: boolean;
 }
 
@@ -126,25 +124,18 @@ function movePlayer(p: Player, input: Input, dt: number): boolean {
 		p.dashCooldown = DASH_COOLDOWN;
 	}
 
-	const { drag } = input;
-	const dragLen = Math.hypot(drag.x, drag.y);
-	const keyLen = Math.hypot(input.dx, input.dy);
+	const moveLen = Math.hypot(input.dx, input.dy);
 	if (p.dashTime > 0) {
 		p.dashTime -= dt;
 		p.x += p.dir.x * DASH_SPEED * dt;
 		p.y += p.dir.y * DASH_SPEED * dt;
-	} else if (dragLen > 0) {
-		const k = Math.min(1, (DRAG_SPEED * dt) / dragLen);
-		p.x += drag.x * k;
-		p.y += drag.y * k;
-	} else if (keyLen > 0) {
-		const k = (PLAYER_SPEED * dt) / keyLen;
+	} else if (moveLen > 0) {
+		const k = (PLAYER_SPEED * dt) / moveLen;
 		p.x += input.dx * k;
 		p.y += input.dy * k;
 	}
-	if (dragLen > 0.5) p.dir = { x: drag.x / dragLen, y: drag.y / dragLen };
-	else if (keyLen > 0) p.dir = { x: input.dx / keyLen, y: input.dy / keyLen };
-	p.moving = dragLen > 0.5 || keyLen > 0 || p.dashTime > 0;
+	if (moveLen > 0) p.dir = { x: input.dx / moveLen, y: input.dy / moveLen };
+	p.moving = moveLen > 0 || p.dashTime > 0;
 	p.x = clamp(p.x, p.r, WIDTH - p.r);
 	p.y = clamp(p.y, p.r, HEIGHT - p.r);
 	return dashed;

@@ -16,6 +16,7 @@ export interface View {
 	newBest: boolean;
 	muted: boolean;
 	music: boolean;
+	touch: boolean;
 	fx: Effects;
 	clock: number;
 }
@@ -353,8 +354,12 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 				ctx,
 				[
 					["DODGE KING", 64, COLORS.crown],
-					["Move: WASD, arrow keys, or drag", 18, COLORS.dim],
-					["Dash: Shift, Space, or double-tap", 18, COLORS.dim],
+					[
+						v.touch ? "Move: joystick" : "Move: WASD or arrow keys",
+						18,
+						COLORS.dim,
+					],
+					["Dash: Shift or Space", 18, COLORS.dim],
 					["Esc: pause   M: sound   N: music", 18, COLORS.dim],
 					["Press Enter or tap to start", 22],
 				],

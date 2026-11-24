@@ -6,7 +6,7 @@ A small browser arcade game. You're a king stuck in an arena: dodge whatever fli
 
 | Action         | Keyboard          | Touch                 |
 | -------------- | ----------------- | --------------------- |
-| Move           | WASD / arrow keys | Drag anywhere         |
+| Move           | WASD / arrow keys | Joystick              |
 | Dash           | Shift or Space    | Double-tap            |
 | Start / resume | Enter             | Tap                   |
 | Pause          | Esc or P          | Pause button          |

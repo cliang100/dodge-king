@@ -17,3 +17,27 @@ canvas {
 	aspect-ratio: 4 / 3;
 	touch-action: none;
 }
+
+#joystick {
+	position: fixed;
+	left: 16px;
+	bottom: 24px;
+	display: grid;
+	place-items: center;
+	width: 130px;
+	height: 130px;
+	border: 2px solid rgb(245 245 245 / 0.4);
+	border-radius: 50%;
+	background: rgb(10 9 18 / 0.35);
+	touch-action: none;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+#knob {
+	width: 50%;
+	height: 50%;
+	border-radius: 50%;
+	background: rgb(245 245 245 / 0.6);
+	pointer-events: none;
+}

@@ -19,7 +19,7 @@ import {
 } from "./hazards";
 import { HEIGHT, overlaps, WIDTH } from "./world";
 
-const idle: Input = { dx: 0, dy: 0, drag: { x: 0, y: 0 }, dash: false };
+const idle: Input = { dx: 0, dy: 0, dash: false };
 const rng = () => 0.5;
 const types = (events: GameEvent[]) => events.map((e) => e.type);
 
@@ -46,13 +46,13 @@ describe("game", () => {
 		expect(s.player.y).toBe(s.player.r);
 	});
 
-	it("follows drag movement, capped per frame", () => {
-		const s = createGame();
-		const x = s.player.x;
-		update(s, { ...idle, drag: { x: 5, y: 0 } }, 0.1, rng);
-		expect(s.player.x).toBeCloseTo(x + 5);
-		update(s, { ...idle, drag: { x: 1000, y: 0 } }, 0.1, rng);
-		expect(s.player.x).toBeCloseTo(x + 5 + 90);
+	it("moves at a set speed however far the stick is pushed", () => {
+		for (const dx of [0.3, 1]) {
+			const s = createGame();
+			const x = s.player.x;
+			update(s, { ...idle, dx }, 0.1, rng);
+			expect(s.player.x).toBeCloseTo(x + 26);
+		}
 	});
 
 	it("warns before a hazard enters the arena", () => {

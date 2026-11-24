@@ -29,7 +29,9 @@ function getCanvas() {
 }
 
 const { canvas, ctx } = getCanvas();
-const readInput = bindInput(canvas, (x, y) => buttonAt(screen, x, y) !== null);
+const readInput = bindInput();
+const touch = matchMedia("(pointer: coarse)");
+const controls = document.querySelector<HTMLElement>("#controls");
 let game = createGame();
 const fx = createEffects(
 	matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -104,6 +106,7 @@ function frame(now: number) {
 	if (screen !== "paused") {
 		stepEffects(fx, screen === "dying" ? dt * DEATH_SLOWMO : dt);
 	}
+	if (controls) controls.hidden = !touch.matches || screen !== "playing";
 	draw(ctx, {
 		screen,
 		game,
@@ -111,6 +114,7 @@ function frame(now: number) {
 		newBest,
 		muted: isMuted(),
 		music: isMusicOn(),
+		touch: touch.matches,
 		fx,
 		clock: now / 1000,
 	});
