@@ -7,6 +7,7 @@ import {
 	overlaps,
 	scoreOf,
 	update,
+	WARNING_TIME,
 } from "./game";
 import {
 	hazardInterval,
@@ -51,6 +52,16 @@ describe("game", () => {
 		expect(s.player.x).toBeCloseTo(x + 5);
 		update(s, { ...idle, drag: { x: 1000, y: 0 } }, 0.1, rng);
 		expect(s.player.x).toBeCloseTo(x + 5 + 90);
+	});
+
+	it("warns before a hazard enters the arena", () => {
+		const s = createGame();
+		update(s, idle, 1, rng);
+		expect(s.warnings).toHaveLength(1);
+		expect(s.hazards).toHaveLength(0);
+		update(s, idle, WARNING_TIME, rng);
+		expect(s.warnings).toHaveLength(0);
+		expect(s.hazards).toHaveLength(1);
 	});
 
 	it("collects coins for points", () => {

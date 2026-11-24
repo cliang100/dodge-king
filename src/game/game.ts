@@ -15,6 +15,7 @@ const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
 const SHIELD_CHANCE = 0.12;
 const INVULNERABLE_TIME = 1;
+export const WARNING_TIME = 0.7;
 
 export interface Player extends Circle {
 	shield: boolean;
@@ -33,6 +34,11 @@ export interface Input {
 	drag: { x: number; y: number };
 }
 
+export interface Warning {
+	hazard: Hazard;
+	delay: number;
+}
+
 export interface GameEvent {
 	type: "coin" | "shield" | "block" | "hit" | "level";
 	x: number;
@@ -45,6 +51,7 @@ export interface GameState {
 	coins: number;
 	player: Player;
 	hazards: Hazard[];
+	warnings: Warning[];
 	pickups: Pickup[];
 	hazardTimer: number;
 	pickupTimer: number;
@@ -64,6 +71,7 @@ export function createGame(): GameState {
 			moving: false,
 		},
 		hazards: [],
+		warnings: [],
 		pickups: [],
 		hazardTimer: 1,
 		pickupTimer: PICKUP_INTERVAL,
@@ -131,9 +139,14 @@ export function update(
 
 	movePlayer(player, input, dt);
 
+	for (const w of s.warnings) w.delay -= dt;
+	for (const w of s.warnings) if (w.delay <= 0) s.hazards.push(w.hazard);
+	s.warnings = s.warnings.filter((w) => w.delay > 0);
+
 	s.hazardTimer -= dt;
 	if (s.hazardTimer <= 0) {
-		s.hazards.push(spawnHazard(s.level, player, rng));
+		const hazard = spawnHazard(s.level, player, rng);
+		s.warnings.push({ hazard, delay: WARNING_TIME });
 		s.hazardTimer += hazardInterval(s.level);
 	}
 

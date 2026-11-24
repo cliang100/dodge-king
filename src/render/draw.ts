@@ -1,4 +1,4 @@
-import type { GameState, Pickup, Player } from "../game/game";
+import type { GameState, Pickup, Player, Warning } from "../game/game";
 import { scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
@@ -28,6 +28,7 @@ const COLORS = {
 	text: "#f5f5f5",
 	dim: "#9a96b0",
 	overlay: "rgba(10, 9, 18, 0.6)",
+	warning: "#ff4d6d",
 	outline: "rgba(10, 9, 18, 0.75)",
 };
 
@@ -122,6 +123,25 @@ function drawHazard(ctx: CanvasRenderingContext2D, h: Hazard) {
 			drawSprite(ctx, frame(sprites.bat, h.ttl * 10), h.x, h.y, 2);
 			break;
 	}
+}
+
+function drawWarning(ctx: CanvasRenderingContext2D, w: Warning) {
+	if (Math.floor(w.delay * 10) % 2 === 0) return;
+	const m = 18;
+	const x = Math.min(WIDTH - m, Math.max(m, w.hazard.x));
+	const y = Math.min(HEIGHT - m, Math.max(m, w.hazard.y));
+	ctx.fillStyle = COLORS.warning;
+	ctx.beginPath();
+	ctx.moveTo(x, y - 13);
+	ctx.lineTo(x + 13, y + 10);
+	ctx.lineTo(x - 13, y + 10);
+	ctx.closePath();
+	ctx.fill();
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	ctx.fillStyle = COLORS.outline;
+	ctx.font = `bold 16px ${FONT}`;
+	ctx.fillText("!", x, y + 2);
 }
 
 function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
@@ -220,6 +240,7 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	for (const p of game.pickups) drawPickup(ctx, p, game.time);
 	for (const h of game.hazards) drawHazard(ctx, h);
 	if (alive) drawPlayer(ctx, game.player, game.time);
+	for (const w of game.warnings) drawWarning(ctx, w);
 	drawEffects(ctx, v.fx);
 	ctx.restore();
 	drawHud(ctx, v);
