@@ -17,6 +17,7 @@ const PALETTE: Record<string, string> = {
 	n: "#c08552",
 	m: "#e8e8f0",
 	o: "#ff7b25",
+	B: "#3a3350",
 	c: "#1d6fa5",
 	C: "#4cc9f0",
 };
@@ -194,6 +195,19 @@ export const hourglass = build([
 	".CCCyyCCC.",
 	".CyyyyyyC.",
 	"nnnnnnnnnn",
+]);
+
+export const bomb = build([
+	"......yf..",
+	".....n....",
+	"....n.....",
+	"..BBBBBB..",
+	".BBhBBBBB.",
+	".BhBBBBBB.",
+	".BBBBBBBB.",
+	".BBBBBBBB.",
+	"..BBBBBB..",
+	"...BBBB...",
 ]);
 
 export function drawSprite(

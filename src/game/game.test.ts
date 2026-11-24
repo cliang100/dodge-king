@@ -142,6 +142,17 @@ describe("game", () => {
 		expect(s.hazards[0]?.x).toBeCloseTo(110);
 	});
 
+	it("bomb clears every hazard and pending warning", () => {
+		const s = createGame();
+		const { x, y } = s.player;
+		s.pickups.push({ kind: "bomb", x, y, r: 10, ttl: 5 });
+		s.hazards.push({ kind: "arrow", x: 50, y: 50, r: 5, vx: 0, vy: 0, ttl: 5 });
+		s.warnings.push({ hazard: spawnHazard(1, s.player, rng), delay: 0.5 });
+		expect(types(update(s, idle, 0.01, rng))).toContain("bomb");
+		expect(s.hazards).toHaveLength(0);
+		expect(s.warnings).toHaveLength(0);
+	});
+
 	it("uses the shield to absorb one hit", () => {
 		const s = createGame();
 		s.player.shield = true;

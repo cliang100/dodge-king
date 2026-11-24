@@ -3,7 +3,7 @@ import { DASH_COOLDOWN, MAGNET_RANGE, scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
 import { drawButtons } from "./buttons";
-import { BANNER_TIME, type Effects } from "./effects";
+import { BANNER_TIME, type Effects, FLASH_TIME } from "./effects";
 import * as sprites from "./sprites";
 import { drawSprite } from "./sprites";
 
@@ -213,6 +213,7 @@ const POWER_UP_SPRITES: Record<PowerUp, sprites.Sprite> = {
 	shield: sprites.shield,
 	magnet: sprites.magnet,
 	slow: sprites.hourglass,
+	bomb: sprites.bomb,
 };
 
 function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
@@ -332,6 +333,12 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	if (game.slow > 0) {
 		ctx.fillStyle = COLORS.slowTint;
 		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+	}
+	if (v.fx.flash > 0) {
+		ctx.globalAlpha = (v.fx.flash / FLASH_TIME) * 0.7;
+		ctx.fillStyle = COLORS.text;
+		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+		ctx.globalAlpha = 1;
 	}
 	drawHud(ctx, v);
 	if (v.fx.banner > 0) drawBanner(ctx, game.level, v.fx.banner);

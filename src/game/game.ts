@@ -37,7 +37,7 @@ export interface Player extends Circle {
 	dashCooldown: number;
 }
 
-export type PowerUp = "shield" | "magnet" | "slow";
+export type PowerUp = "shield" | "magnet" | "slow" | "bomb";
 
 export interface Pickup extends Circle {
 	kind: "coin" | PowerUp;
@@ -146,6 +146,7 @@ const isActive: Record<PowerUp, (s: GameState) => boolean> = {
 	shield: (s) => s.player.shield,
 	magnet: (s) => s.magnet > 0,
 	slow: (s) => s.slow > 0,
+	bomb: () => false,
 };
 
 function spawnPickup(s: GameState, rng: Rng): Pickup | null {
@@ -192,6 +193,10 @@ function collect(s: GameState, kind: Pickup["kind"]) {
 			break;
 		case "slow":
 			s.slow = SLOW_TIME;
+			break;
+		case "bomb":
+			s.hazards = [];
+			s.warnings = [];
 			break;
 	}
 }

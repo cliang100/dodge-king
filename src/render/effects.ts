@@ -25,6 +25,7 @@ export interface Effects {
 	texts: FloatingText[];
 	shake: number;
 	banner: number;
+	flash: number;
 	reduceMotion: boolean;
 }
 
@@ -65,6 +66,13 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		shake: 0,
 		text: "SLOW",
 	},
+	bomb: {
+		count: 40,
+		speed: 320,
+		colors: ["#ffffff", "#ffd23f", "#ff7b25"],
+		shake: 10,
+		text: "BOOM",
+	},
 	block: { count: 18, speed: 200, colors: ["#4cc9f0", "#ffffff"], shake: 6 },
 	hit: {
 		count: 36,
@@ -80,12 +88,14 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 const GRAVITY = 300;
 const SHAKE_DECAY = 30;
 export const BANNER_TIME = 1.6;
+export const FLASH_TIME = 0.25;
 
 export const createEffects = (reduceMotion: boolean): Effects => ({
 	particles: [],
 	texts: [],
 	shake: 0,
 	banner: 0,
+	flash: 0,
 	reduceMotion,
 });
 
@@ -116,7 +126,9 @@ export function emit(fx: Effects, event: GameEvent, rng: Rng = Math.random) {
 		});
 	}
 	if (event.type === "level") fx.banner = BANNER_TIME;
-	if (!fx.reduceMotion) fx.shake = Math.max(fx.shake, burst.shake);
+	if (fx.reduceMotion) return;
+	if (event.type === "bomb") fx.flash = FLASH_TIME;
+	fx.shake = Math.max(fx.shake, burst.shake);
 }
 
 export function stepEffects(fx: Effects, dt: number) {
@@ -134,4 +146,5 @@ export function stepEffects(fx: Effects, dt: number) {
 	fx.texts = fx.texts.filter((t) => t.life > 0);
 	fx.shake = Math.max(0, fx.shake - SHAKE_DECAY * dt);
 	fx.banner = Math.max(0, fx.banner - dt);
+	fx.flash = Math.max(0, fx.flash - dt);
 }
