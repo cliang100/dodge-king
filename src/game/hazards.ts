@@ -8,6 +8,7 @@ export interface Hazard extends Circle {
 	vy: number;
 	ttl: number;
 	vertical?: boolean;
+	grazed?: boolean;
 }
 
 const SPAWN_MARGIN = 30;
@@ -119,10 +120,10 @@ export function split(h: Hazard): Hazard[] {
 	}));
 }
 
-export function hits(c: Circle, h: Hazard) {
-	if (h.kind !== "laser") return overlaps(c, h);
+export function hits(c: Circle, h: Hazard, margin = 0) {
+	if (h.kind !== "laser") return overlaps({ ...c, r: c.r + margin }, h);
 	const gap = h.vertical ? Math.abs(c.x - h.x) : Math.abs(c.y - h.y);
-	return gap < c.r + h.r;
+	return gap < c.r + h.r + margin;
 }
 
 export const isAlive = (h: Hazard) =>

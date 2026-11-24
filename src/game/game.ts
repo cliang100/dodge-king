@@ -19,6 +19,8 @@ const LEVEL_TIME = 15;
 export const COIN_POINTS = 50;
 const COMBO_WINDOW = 2;
 const MAX_COMBO = 5;
+const NEAR_MISS_RANGE = 14;
+export const NEAR_MISS_POINTS = 25;
 const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
 const POWER_UP_CHANCE = 0.2;
@@ -59,7 +61,7 @@ export interface Warning {
 }
 
 export interface GameEvent {
-	type: Pickup["kind"] | "block" | "hit" | "level" | "dash" | "split";
+	type: Pickup["kind"] | "block" | "hit" | "level" | "dash" | "split" | "close";
 	x: number;
 	y: number;
 	combo?: number;
@@ -272,7 +274,15 @@ export function update(
 
 	if (player.invulnerable > 0 || player.dashTime > 0) return events;
 	const hit = s.hazards.find((h) => hits(player, h));
-	if (!hit) return events;
+	if (!hit) {
+		for (const h of s.hazards) {
+			if (h.grazed || !hits(player, h, NEAR_MISS_RANGE)) continue;
+			h.grazed = true;
+			s.bonus += NEAR_MISS_POINTS;
+			events.push({ type: "close", x: player.x, y: player.y });
+		}
+		return events;
+	}
 	if (player.shield) {
 		player.shield = false;
 		player.invulnerable = INVULNERABLE_TIME;

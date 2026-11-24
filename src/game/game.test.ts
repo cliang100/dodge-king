@@ -193,6 +193,22 @@ describe("game", () => {
 		expect(s.player.invulnerable).toBeGreaterThan(0);
 	});
 
+	it("awards a close-call bonus once per hazard", () => {
+		const s = createGame();
+		s.hazards.push({
+			kind: "arrow",
+			x: s.player.x + 28,
+			y: s.player.y,
+			r: 5,
+			vx: 0,
+			vy: 0,
+			ttl: 5,
+		});
+		expect(types(update(s, idle, 0.01, rng))).toEqual(["close"]);
+		expect(types(update(s, idle, 0.01, rng))).toEqual([]);
+		expect(s.bonus).toBe(25);
+	});
+
 	it("ends the run on an unshielded hit", () => {
 		const s = createGame();
 		s.hazards.push({

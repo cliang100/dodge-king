@@ -37,6 +37,7 @@ const sounds: Record<GameEvent["type"] | "start", (combo: number) => void> = {
 	slow: () => tone(880, 0.5, "sine", 220),
 	bomb: () => tone(160, 0.6, "sawtooth", 30),
 	split: () => tone(180, 0.2, "square", 60),
+	close: () => tone(1500, 0.05, "triangle", 1800),
 	block: () => tone(220, 0.25, "sawtooth", 110),
 	hit: () => tone(300, 0.7, "sawtooth", 40),
 	level: () => {
