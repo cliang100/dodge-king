@@ -29,6 +29,10 @@ export function bindInput(): () => Input {
 		if (DASH_KEYS.has(e.code) && !e.repeat) dash = true;
 		keys.add(e.code);
 	});
+	// pointerdown rather than click, so it responds at once with the other thumb on the stick
+	document.querySelector("#dash")?.addEventListener("pointerdown", () => {
+		dash = true;
+	});
 	window.addEventListener("keyup", (e) => keys.delete(e.code));
 	window.addEventListener("blur", () => keys.clear());
 

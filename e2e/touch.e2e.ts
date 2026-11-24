@@ -7,8 +7,11 @@ test.describe("phone", () => {
 	test("shows touch controls while playing", async ({ page }) => {
 		await page.goto("/");
 		await expect(page.locator("#joystick")).toBeHidden();
+		const canvasBox = await page.locator("#game").boundingBox();
 		await page.locator("#game").tap();
 		await expect(page.locator("#joystick")).toBeVisible();
+		await expect(page.locator("#dash")).toBeVisible();
+		expect(await page.locator("#game").boundingBox()).toEqual(canvasBox);
 
 		const box = await page.locator("#joystick").boundingBox();
 		if (!box) throw new Error("no joystick");

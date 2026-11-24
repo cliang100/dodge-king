@@ -7,10 +7,12 @@ A small browser arcade game. You're a king stuck in an arena: dodge whatever fli
 | Action         | Keyboard          | Touch                 |
 | -------------- | ----------------- | --------------------- |
 | Move           | WASD / arrow keys | Joystick              |
-| Dash           | Shift or Space    | Double-tap            |
+| Dash           | Shift or Space    | Dash button           |
 | Start / resume | Enter             | Tap                   |
 | Pause          | Esc or P          | Pause button          |
 | Sound / music  | M / N             | Buttons, bottom right |
+
+The joystick and dash button only show up on touch devices.
 
 ## Hazards
 
