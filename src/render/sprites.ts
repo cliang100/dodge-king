@@ -172,6 +172,17 @@ export const shield = build([
 	"....cc....",
 ]);
 
+export const magnet = build([
+	".mm....mm.",
+	".mm....mm.",
+	".rr....rr.",
+	".rr....rr.",
+	".rr....rr.",
+	".rrr..rrr.",
+	"..rrrrrr..",
+	"...RRRR...",
+]);
+
 export function drawSprite(
 	ctx: CanvasRenderingContext2D,
 	sprite: Sprite,

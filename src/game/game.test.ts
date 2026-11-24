@@ -112,6 +112,20 @@ describe("game", () => {
 		expect(scoreOf(s)).toBe(50);
 	});
 
+	it("magnet pulls nearby coins toward the player", () => {
+		const s = createGame();
+		const { x, y } = s.player;
+		s.pickups.push(
+			{ kind: "magnet", x, y, r: 10, ttl: 5 },
+			{ kind: "coin", x: x + 150, y, r: 10, ttl: 5 },
+			{ kind: "coin", x: x + 300, y, r: 10, ttl: 5 },
+		);
+		update(s, idle, 0.1, rng);
+		expect(s.magnet).toBeGreaterThan(0);
+		update(s, idle, 0.1, rng);
+		expect(s.pickups.map((p) => p.x)).toEqual([x + 118, x + 300]);
+	});
+
 	it("uses the shield to absorb one hit", () => {
 		const s = createGame();
 		s.player.shield = true;

@@ -20,6 +20,9 @@ export const COIN_POINTS = 50;
 const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
 const POWER_UP_CHANCE = 0.2;
+const MAGNET_TIME = 6;
+export const MAGNET_RANGE = 220;
+const MAGNET_PULL = 320;
 const INVULNERABLE_TIME = 1;
 export const WARNING_TIME = 0.7;
 
@@ -32,7 +35,7 @@ export interface Player extends Circle {
 	dashCooldown: number;
 }
 
-export type PowerUp = "shield";
+export type PowerUp = "shield" | "magnet";
 
 export interface Pickup extends Circle {
 	kind: "coin" | PowerUp;
@@ -67,6 +70,7 @@ export interface GameState {
 	pickups: Pickup[];
 	hazardTimer: number;
 	pickupTimer: number;
+	magnet: number;
 }
 
 export function createGame(): GameState {
@@ -90,6 +94,7 @@ export function createGame(): GameState {
 		pickups: [],
 		hazardTimer: 1,
 		pickupTimer: PICKUP_INTERVAL,
+		magnet: 0,
 	};
 }
 
@@ -135,6 +140,7 @@ function movePlayer(p: Player, input: Input, dt: number): boolean {
 
 const isActive: Record<PowerUp, (s: GameState) => boolean> = {
 	shield: (s) => s.player.shield,
+	magnet: (s) => s.magnet > 0,
 };
 
 function spawnPickup(s: GameState, rng: Rng): Pickup | null {
@@ -156,6 +162,18 @@ function spawnPickup(s: GameState, rng: Rng): Pickup | null {
 	};
 }
 
+function pullCoins(pickups: Pickup[], to: Circle, dt: number) {
+	for (const p of pickups) {
+		const dx = to.x - p.x;
+		const dy = to.y - p.y;
+		const dist = Math.hypot(dx, dy);
+		if (p.kind !== "coin" || dist > MAGNET_RANGE || dist === 0) continue;
+		const step = Math.min(dist, MAGNET_PULL * dt);
+		p.x += (dx / dist) * step;
+		p.y += (dy / dist) * step;
+	}
+}
+
 function collect(s: GameState, kind: Pickup["kind"]) {
 	switch (kind) {
 		case "coin":
@@ -163,6 +181,9 @@ function collect(s: GameState, kind: Pickup["kind"]) {
 			break;
 		case "shield":
 			s.player.shield = true;
+			break;
+		case "magnet":
+			s.magnet = MAGNET_TIME;
 			break;
 	}
 }
@@ -209,6 +230,9 @@ export function update(
 	const splitting = s.hazards.filter(isSplitting);
 	for (const h of splitting) events.push({ type: "split", x: h.x, y: h.y });
 	s.hazards = [...s.hazards.filter(isAlive), ...splitting.flatMap(split)];
+
+	s.magnet = Math.max(0, s.magnet - dt);
+	if (s.magnet > 0) pullCoins(s.pickups, player, dt);
 
 	s.pickups = s.pickups.filter((p) => {
 		p.ttl -= dt;

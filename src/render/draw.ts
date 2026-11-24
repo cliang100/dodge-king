@@ -1,5 +1,5 @@
-import type { GameState, Pickup, Player, Warning } from "../game/game";
-import { DASH_COOLDOWN, scoreOf } from "../game/game";
+import type { GameState, Pickup, Player, PowerUp, Warning } from "../game/game";
+import { DASH_COOLDOWN, MAGNET_RANGE, scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
 import { drawButtons } from "./buttons";
@@ -29,6 +29,7 @@ const COLORS = {
 	dim: "#9a96b0",
 	overlay: "rgba(10, 9, 18, 0.6)",
 	warning: "#ff4d6d",
+	magnet: "#ff6b6b",
 	laser: "rgba(255, 77, 109, 0.55)",
 	outline: "rgba(10, 9, 18, 0.75)",
 };
@@ -94,7 +95,12 @@ function drawShadow(ctx: CanvasRenderingContext2D, c: Circle) {
 	ctx.fill();
 }
 
-function drawPlayer(ctx: CanvasRenderingContext2D, p: Player, time: number) {
+function drawPlayer(
+	ctx: CanvasRenderingContext2D,
+	p: Player,
+	time: number,
+	magnet: boolean,
+) {
 	if (p.invulnerable > 0 && Math.floor(time * 20) % 2 === 0) return;
 	const sprite = p.moving
 		? frame(sprites.kingWalk, time * 8)
@@ -121,6 +127,14 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: Player, time: number) {
 			w * (1 - p.dashCooldown / DASH_COOLDOWN),
 			4,
 		);
+	}
+	if (magnet) {
+		ctx.strokeStyle = COLORS.magnet;
+		ctx.lineWidth = 1;
+		ctx.globalAlpha = 0.25;
+		circle(ctx, p.x, p.y, MAGNET_RANGE);
+		ctx.stroke();
+		ctx.globalAlpha = 1;
 	}
 	if (p.shield) {
 		ctx.strokeStyle = COLORS.shield;
@@ -194,11 +208,18 @@ function drawWarning(ctx: CanvasRenderingContext2D, w: Warning) {
 	ctx.fillText("!", x, y + 2);
 }
 
+const POWER_UP_SPRITES: Record<PowerUp, sprites.Sprite> = {
+	shield: sprites.shield,
+	magnet: sprites.magnet,
+};
+
 function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
 	if (p.ttl < 1.5 && Math.floor(time * 8) % 2 === 0) return;
 	const bob = Math.sin(time * 4 + p.x) * 2;
 	const sprite =
-		p.kind === "coin" ? frame(sprites.coin, p.ttl * 8) : sprites.shield;
+		p.kind === "coin"
+			? frame(sprites.coin, p.ttl * 8)
+			: POWER_UP_SPRITES[p.kind];
 	drawSprite(ctx, sprite, p.x, p.y + bob, 2.5);
 }
 
@@ -259,6 +280,17 @@ function drawHud(ctx: CanvasRenderingContext2D, v: View) {
 	text(ctx, `Level ${v.game.level}`, WIDTH / 2, 14, 20);
 	ctx.textAlign = "right";
 	text(ctx, `Best ${v.best}`, WIDTH - 16, 14, 20);
+
+	const timers: [string, number, string][] = [
+		["MAGNET", v.game.magnet, COLORS.magnet],
+	];
+	ctx.textAlign = "left";
+	let y = 42;
+	for (const [label, remaining, color] of timers) {
+		if (remaining <= 0) continue;
+		text(ctx, `${label} ${Math.ceil(remaining)}`, 16, y, 14, color);
+		y += 20;
+	}
 }
 
 function drawOverlay(
@@ -290,7 +322,7 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	if (alive) drawShadow(ctx, game.player);
 	for (const p of game.pickups) drawPickup(ctx, p, game.time);
 	for (const h of game.hazards) drawHazard(ctx, h);
-	if (alive) drawPlayer(ctx, game.player, game.time);
+	if (alive) drawPlayer(ctx, game.player, game.time, game.magnet > 0);
 	for (const w of game.warnings) drawWarning(ctx, w);
 	drawEffects(ctx, v.fx);
 	ctx.restore();
