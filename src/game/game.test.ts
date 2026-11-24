@@ -151,6 +151,7 @@ describe("hazards", () => {
 		expect(unlockedKinds(1)).toEqual(["arrow"]);
 		expect(unlockedKinds(3)).toContain("bat");
 		expect(unlockedKinds(4)).toContain("laser");
+		expect(unlockedKinds(5)).toContain("splitter");
 	});
 
 	it("spawns faster at higher levels, with a floor", () => {
@@ -188,6 +189,23 @@ describe("hazards", () => {
 		expect(hits({ x: 300, y: 550, r: 14 }, laser)).toBe(laser.vertical);
 		expect(hits({ x: 700, y: 200, r: 14 }, laser)).toBe(!laser.vertical);
 		expect(hits({ x: 700, y: 550, r: 14 }, laser)).toBe(false);
+	});
+
+	it("splits lava boulders into two boulders when the fuse runs out", () => {
+		const s = createGame();
+		s.hazards.push({
+			kind: "splitter",
+			x: 100,
+			y: 100,
+			r: 26,
+			vx: 100,
+			vy: 0,
+			ttl: 0.01,
+		});
+		expect(types(update(s, idle, 0.02, rng))).toContain("split");
+		const boulders = s.hazards.filter((h) => h.kind === "boulder");
+		expect(boulders).toHaveLength(2);
+		expect(boulders.map((b) => Math.sign(b.vy))).toEqual([1, -1]);
 	});
 
 	it("removes hazards that leave the arena or expire", () => {

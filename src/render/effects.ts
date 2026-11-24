@@ -59,6 +59,7 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		shake: 14,
 	},
 	level: { count: 0, speed: 0, colors: [], shake: 0 },
+	split: { count: 20, speed: 180, colors: ["#ff7b25", "#ffd23f"], shake: 5 },
 	dash: { count: 8, speed: 90, colors: ["#ffffff", "#c8c3ff"], shake: 0 },
 };
 

@@ -144,6 +144,12 @@ function drawHazard(ctx: CanvasRenderingContext2D, h: Hazard) {
 		case "bat":
 			drawSprite(ctx, frame(sprites.bat, h.ttl * 10), h.x, h.y, 2);
 			break;
+		case "splitter": {
+			const pulse = h.ttl < 0.8 ? 1 + Math.sin(h.ttl * 40) * 0.06 : 1;
+			const angle = (h.x + h.y) / h.r;
+			drawSprite(ctx, sprites.splitter, h.x, h.y, 3.25 * pulse, angle);
+			break;
+		}
 		case "laser":
 			ctx.globalAlpha = Math.min(1, h.ttl * 8);
 			laserLine(ctx, h, h.r * 2 + 6, COLORS.laser);

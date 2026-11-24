@@ -3,8 +3,10 @@ import {
 	hazardInterval,
 	hits,
 	isAlive,
+	isSplitting,
 	moveHazard,
 	spawnHazard,
+	split,
 } from "./hazards";
 import { type Circle, HEIGHT, overlaps, type Rng, WIDTH } from "./world";
 
@@ -48,7 +50,7 @@ export interface Warning {
 }
 
 export interface GameEvent {
-	type: "coin" | "shield" | "block" | "hit" | "level" | "dash";
+	type: "coin" | "shield" | "block" | "hit" | "level" | "dash" | "split";
 	x: number;
 	y: number;
 }
@@ -183,7 +185,9 @@ export function update(
 	}
 
 	for (const h of s.hazards) moveHazard(h, player, s.level, dt);
-	s.hazards = s.hazards.filter(isAlive);
+	const splitting = s.hazards.filter(isSplitting);
+	for (const h of splitting) events.push({ type: "split", x: h.x, y: h.y });
+	s.hazards = [...s.hazards.filter(isAlive), ...splitting.flatMap(split)];
 
 	s.pickups = s.pickups.filter((p) => {
 		p.ttl -= dt;

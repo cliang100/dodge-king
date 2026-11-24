@@ -1,6 +1,6 @@
 import { type Circle, HEIGHT, overlaps, type Rng, WIDTH } from "./world";
 
-export type HazardKind = "arrow" | "boulder" | "bat" | "laser";
+export type HazardKind = "arrow" | "boulder" | "bat" | "laser" | "splitter";
 
 export interface Hazard extends Circle {
 	kind: HazardKind;
@@ -21,18 +21,25 @@ const STATS: Record<
 	boulder: { r: 18, speed: 150, spread: 0.8, ttl: 10 },
 	bat: { r: 10, speed: 95, spread: 0, ttl: 7 },
 	laser: { r: 10, speed: 0, spread: 0, ttl: 0.6 },
+	splitter: { r: 26, speed: 120, spread: 0.6, ttl: 3 },
 };
 
 export const speedScale = (level: number) => 1 + 0.12 * (level - 1);
 export const hazardInterval = (level: number) =>
 	Math.max(0.25, 1.1 * 0.85 ** (level - 1));
 
-export function unlockedKinds(level: number): HazardKind[] {
-	if (level >= 4) return ["arrow", "boulder", "bat", "laser"];
-	if (level >= 3) return ["arrow", "boulder", "bat"];
-	if (level >= 2) return ["arrow", "boulder"];
-	return ["arrow"];
-}
+const UNLOCK_LEVEL: Record<HazardKind, number> = {
+	arrow: 1,
+	boulder: 2,
+	bat: 3,
+	laser: 4,
+	splitter: 5,
+};
+
+export const unlockedKinds = (level: number) =>
+	(Object.keys(UNLOCK_LEVEL) as HazardKind[]).filter(
+		(k) => level >= UNLOCK_LEVEL[k],
+	);
 
 function edgePoint(rng: Rng) {
 	const t = rng();
@@ -89,12 +96,27 @@ export function moveHazard(
 	}
 	h.x += h.vx * dt;
 	h.y += h.vy * dt;
-	if (h.kind === "boulder") {
+	if (h.kind === "boulder" || h.kind === "splitter") {
 		if ((h.x < h.r && h.vx < 0) || (h.x > WIDTH - h.r && h.vx > 0))
 			h.vx = -h.vx;
 		if ((h.y < h.r && h.vy < 0) || (h.y > HEIGHT - h.r && h.vy > 0))
 			h.vy = -h.vy;
 	}
+}
+
+export const isSplitting = (h: Hazard) => h.kind === "splitter" && h.ttl <= 0;
+
+export function split(h: Hazard): Hazard[] {
+	const { r, ttl } = STATS.boulder;
+	return [1, -1].map((side) => ({
+		kind: "boulder",
+		x: h.x,
+		y: h.y,
+		r,
+		vx: -h.vy * side,
+		vy: h.vx * side,
+		ttl,
+	}));
 }
 
 export function hits(c: Circle, h: Hazard) {
