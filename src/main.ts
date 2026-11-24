@@ -49,12 +49,12 @@ function resize() {
 
 function advance() {
 	unlockAudio();
+	if (screen === "playing" || screen === "dying") return;
 	readInput();
-	if (screen === "dying") return;
 	if (screen === "paused") {
 		screen = "playing";
 		startMusic(false);
-	} else if (screen !== "playing") {
+	} else {
 		game = createGame();
 		newBest = false;
 		screen = "playing";
