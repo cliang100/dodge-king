@@ -16,6 +16,7 @@ export interface View {
 	newBest: boolean;
 	muted: boolean;
 	music: boolean;
+	touch: boolean;
 	fx: Effects;
 	clock: number;
 }
@@ -319,6 +320,7 @@ function drawOverlay(
 
 export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	const { game } = v;
+	const go = v.touch ? "Tap" : "Press Enter or click";
 	const alive = v.screen === "playing" || v.screen === "paused";
 	const shake = v.fx.shake;
 	ctx.imageSmoothingEnabled = false;
@@ -353,10 +355,24 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 				ctx,
 				[
 					["DODGE KING", 64, COLORS.crown],
-					["Move: WASD, arrow keys, or drag", 18, COLORS.dim],
-					["Dash: Shift, Space, or double-tap", 18, COLORS.dim],
-					["Esc: pause   M: sound   N: music", 18, COLORS.dim],
-					["Press Enter or tap to start", 22],
+					[
+						v.touch ? "Move: joystick" : "Move: WASD or arrow keys",
+						18,
+						COLORS.dim,
+					],
+					[
+						v.touch ? "Dash: dash button" : "Dash: Shift or Space",
+						18,
+						COLORS.dim,
+					],
+					[
+						v.touch
+							? "Scores, sound, music, pause: bottom right"
+							: "Esc: pause   M: sound   N: music   L: scores",
+						18,
+						COLORS.dim,
+					],
+					[`${go} to start`, 22],
 				],
 				40,
 			);
@@ -371,7 +387,7 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 		case "paused":
 			drawOverlay(ctx, [
 				["Paused", 48],
-				["Press Enter or tap to resume", 22],
+				[`${go} to resume`, 22],
 			]);
 			break;
 		case "over":
@@ -383,7 +399,7 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 					22,
 					v.newBest ? COLORS.coin : COLORS.dim,
 				],
-				["Press Enter or tap to play again", 22],
+				[`${go} to play again`, 22],
 			]);
 			break;
 	}

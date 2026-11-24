@@ -6,11 +6,14 @@ A small browser arcade game. You're a king stuck in an arena: dodge whatever fli
 
 | Action         | Keyboard          | Touch                 |
 | -------------- | ----------------- | --------------------- |
-| Move           | WASD / arrow keys | Drag anywhere         |
-| Dash           | Shift or Space    | Double-tap            |
+| Move           | WASD / arrow keys | Joystick              |
+| Dash           | Shift or Space    | Dash button           |
 | Start / resume | Enter             | Tap                   |
 | Pause          | Esc or P          | Pause button          |
 | Sound / music  | M / N             | Buttons, bottom right |
+| Leaderboard    | L                 | Button, bottom right  |
+
+The joystick and dash button only show up on touch devices.
 
 ## Hazards
 
@@ -31,6 +34,10 @@ A red marker flashes at the edge before anything enters.
 - **Bomb**: clears the arena
 
 Narrowly missing a hazard gives a small bonus too.
+
+## Leaderboard
+
+The top 10 scores are shared online, one entry per name. They're stored with Netlify Blobs through a small function, so the leaderboard only works on the deployed site or with `netlify dev`.
 
 ## Running locally
 
@@ -55,4 +62,5 @@ TypeScript, Vite, and the Canvas 2D API, with no game engine. Sprites are pixel 
 - `src/game/`: game rules (movement, hazards, pickups, scoring). Pure logic, unit tested.
 - `src/render/`: drawing, sprites, particles, and on-screen buttons
 - `src/audio/`: sound effects and the music sequencer
-- `src/input/`: keyboard and touch input
+- `src/input/`: keyboard, joystick, and dash button
+- `netlify/functions/`: the leaderboard API

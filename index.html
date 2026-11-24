@@ -9,6 +9,20 @@
   </head>
   <body>
     <canvas id="game" role="img" aria-label="Dodge King game area"></canvas>
+    <div id="controls" hidden>
+      <div id="joystick"><div id="knob"></div></div>
+      <button id="dash" type="button">Dash</button>
+    </div>
+    <dialog id="leaderboard" aria-labelledby="leaderboard-title">
+      <h2 id="leaderboard-title">Leaderboard</h2>
+      <p id="status" role="status"></p>
+      <form id="submit-score" hidden>
+        <input id="name" aria-label="Your name" placeholder="Your name" maxlength="12" autocomplete="nickname" required />
+        <button id="save" type="submit">Save</button>
+      </form>
+      <ol id="scores"></ol>
+      <button id="close" type="button">Close</button>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

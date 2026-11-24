@@ -11,6 +11,7 @@ import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
 import { bindInput, toWorld } from "./input/input";
+import { clearPendingScore, offerScore, openLeaderboard } from "./leaderboard";
 import { buttonAt } from "./render/buttons";
 import { draw, type Screen } from "./render/draw";
 import { createEffects, emit, stepEffects } from "./render/effects";
@@ -29,7 +30,9 @@ function getCanvas() {
 }
 
 const { canvas, ctx } = getCanvas();
-const readInput = bindInput(canvas, (x, y) => buttonAt(screen, x, y) !== null);
+const readInput = bindInput();
+const touch = matchMedia("(pointer: coarse)");
+const controls = document.querySelector<HTMLElement>("#controls");
 let game = createGame();
 const fx = createEffects(
 	matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -49,14 +52,15 @@ function resize() {
 
 function advance() {
 	unlockAudio();
+	if (screen === "playing" || screen === "dying") return;
 	readInput();
-	if (screen === "dying") return;
 	if (screen === "paused") {
 		screen = "playing";
 		startMusic(false);
-	} else if (screen !== "playing") {
+	} else {
 		game = createGame();
 		newBest = false;
+		clearPendingScore();
 		screen = "playing";
 		playSound("start");
 		setTempo(1);
@@ -99,11 +103,15 @@ function frame(now: number) {
 	}
 	if (screen === "dying") {
 		deathTimer -= dt;
-		if (deathTimer <= 0) screen = "over";
+		if (deathTimer <= 0) {
+			screen = "over";
+			offerScore(scoreOf(game), () => screen === "over");
+		}
 	}
 	if (screen !== "paused") {
 		stepEffects(fx, screen === "dying" ? dt * DEATH_SLOWMO : dt);
 	}
+	if (controls) controls.hidden = !touch.matches || screen !== "playing";
 	draw(ctx, {
 		screen,
 		game,
@@ -111,6 +119,7 @@ function frame(now: number) {
 		newBest,
 		muted: isMuted(),
 		music: isMusicOn(),
+		touch: touch.matches,
 		fx,
 		clock: now / 1000,
 	});
@@ -128,6 +137,8 @@ window.addEventListener("keydown", (e) => {
 		toggleMute();
 	} else if (e.code === "KeyN") {
 		toggleMusic();
+	} else if (e.code === "KeyL" && (screen === "title" || screen === "over")) {
+		openLeaderboard();
 	}
 });
 
@@ -137,6 +148,7 @@ canvas.addEventListener("pointerdown", (e) => {
 	if (button === "pause") togglePause();
 	else if (button === "sound") toggleMute();
 	else if (button === "music") toggleMusic();
+	else if (button === "scores") openLeaderboard();
 	else if (screen !== "playing") advance();
 	unlockAudio();
 });
