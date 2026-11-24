@@ -24,13 +24,20 @@ function tone(
 	osc.stop(t + duration);
 }
 
-const sounds: Record<GameEvent["type"] | "start", () => void> = {
+const sounds: Record<GameEvent["type"] | "start", (combo: number) => void> = {
 	start: () => tone(440, 0.15, "square", 880),
-	coin: () => {
-		tone(988, 0.06);
-		tone(1319, 0.12, "square", 1319, 0.06);
+	coin: (combo) => {
+		const pitch = 2 ** ((combo - 1) / 6);
+		tone(988 * pitch, 0.06);
+		tone(1319 * pitch, 0.12, "square", 1319 * pitch, 0.06);
 	},
 	shield: () => tone(330, 0.3, "triangle", 990),
+	dash: () => tone(700, 0.12, "triangle", 200),
+	magnet: () => tone(520, 0.25, "triangle", 260),
+	slow: () => tone(880, 0.5, "sine", 220),
+	bomb: () => tone(160, 0.6, "sawtooth", 30),
+	split: () => tone(180, 0.2, "square", 60),
+	close: () => tone(1500, 0.05, "triangle", 1800),
 	block: () => tone(220, 0.25, "sawtooth", 110),
 	hit: () => tone(300, 0.7, "sawtooth", 40),
 	level: () => {
@@ -39,4 +46,5 @@ const sounds: Record<GameEvent["type"] | "start", () => void> = {
 	},
 };
 
-export const playSound = (name: GameEvent["type"] | "start") => sounds[name]();
+export const playSound = (name: GameEvent["type"] | "start", combo = 1) =>
+	sounds[name](combo);

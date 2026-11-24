@@ -30,9 +30,11 @@ describe("effects", () => {
 		expect(fx.banner).toBe(0);
 	});
 
-	it("skips shake when reduced motion is preferred", () => {
+	it("skips shake and flash when reduced motion is preferred", () => {
 		const fx = createEffects(true);
 		emit(fx, { type: "hit", x: 0, y: 0 }, rng);
+		emit(fx, { type: "bomb", x: 0, y: 0 }, rng);
 		expect(fx.shake).toBe(0);
+		expect(fx.flash).toBe(0);
 	});
 });

@@ -1,4 +1,4 @@
-import { COIN_POINTS, type GameEvent } from "../game/game";
+import { COIN_POINTS, type GameEvent, NEAR_MISS_POINTS } from "../game/game";
 import type { Rng } from "../game/world";
 
 export interface Particle {
@@ -25,6 +25,7 @@ export interface Effects {
 	texts: FloatingText[];
 	shake: number;
 	banner: number;
+	flash: number;
 	reduceMotion: boolean;
 }
 
@@ -42,7 +43,6 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		speed: 120,
 		colors: ["#ffd23f", "#fff3b0"],
 		shake: 0,
-		text: `+${COIN_POINTS}`,
 	},
 	shield: {
 		count: 14,
@@ -50,6 +50,27 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		colors: ["#4cc9f0", "#ffffff"],
 		shake: 0,
 		text: "SHIELD",
+	},
+	magnet: {
+		count: 14,
+		speed: 140,
+		colors: ["#ff6b6b", "#e8e8f0"],
+		shake: 0,
+		text: "MAGNET",
+	},
+	slow: {
+		count: 14,
+		speed: 140,
+		colors: ["#4cc9f0", "#ffd23f"],
+		shake: 0,
+		text: "SLOW",
+	},
+	bomb: {
+		count: 40,
+		speed: 320,
+		colors: ["#ffffff", "#ffd23f", "#ff7b25"],
+		shake: 10,
+		text: "BOOM",
 	},
 	block: { count: 18, speed: 200, colors: ["#4cc9f0", "#ffffff"], shake: 6 },
 	hit: {
@@ -59,17 +80,28 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		shake: 14,
 	},
 	level: { count: 0, speed: 0, colors: [], shake: 0 },
+	split: { count: 20, speed: 180, colors: ["#ff7b25", "#ffd23f"], shake: 5 },
+	close: {
+		count: 6,
+		speed: 80,
+		colors: ["#ffffff", "#ffd23f"],
+		shake: 0,
+		text: `CLOSE! +${NEAR_MISS_POINTS}`,
+	},
+	dash: { count: 8, speed: 90, colors: ["#ffffff", "#c8c3ff"], shake: 0 },
 };
 
 const GRAVITY = 300;
 const SHAKE_DECAY = 30;
 export const BANNER_TIME = 1.6;
+export const FLASH_TIME = 0.25;
 
 export const createEffects = (reduceMotion: boolean): Effects => ({
 	particles: [],
 	texts: [],
 	shake: 0,
 	banner: 0,
+	flash: 0,
 	reduceMotion,
 });
 
@@ -90,17 +122,24 @@ export function emit(fx: Effects, event: GameEvent, rng: Rng = Math.random) {
 			color: burst.colors[i % burst.colors.length] ?? "#fff",
 		});
 	}
-	if (burst.text) {
+	const combo = event.combo ?? 1;
+	const text =
+		event.type === "coin"
+			? `+${COIN_POINTS * combo}${combo > 1 ? ` x${combo}` : ""}`
+			: burst.text;
+	if (text) {
 		fx.texts.push({
 			x: event.x,
 			y: event.y - 20,
-			text: burst.text,
+			text,
 			life: 0.8,
 			color: burst.colors[0] ?? "#fff",
 		});
 	}
 	if (event.type === "level") fx.banner = BANNER_TIME;
-	if (!fx.reduceMotion) fx.shake = Math.max(fx.shake, burst.shake);
+	if (fx.reduceMotion) return;
+	if (event.type === "bomb") fx.flash = FLASH_TIME;
+	fx.shake = Math.max(fx.shake, burst.shake);
 }
 
 export function stepEffects(fx: Effects, dt: number) {
@@ -118,4 +157,5 @@ export function stepEffects(fx: Effects, dt: number) {
 	fx.texts = fx.texts.filter((t) => t.life > 0);
 	fx.shake = Math.max(0, fx.shake - SHAKE_DECAY * dt);
 	fx.banner = Math.max(0, fx.banner - dt);
+	fx.flash = Math.max(0, fx.flash - dt);
 }

@@ -10,13 +10,16 @@ import {
 import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
-import { bindInput } from "./input/input";
+import { bindInput, toWorld } from "./input/input";
+import { buttonAt } from "./render/buttons";
 import { draw, type Screen } from "./render/draw";
 import { createEffects, emit, stepEffects } from "./render/effects";
 import { load, save } from "./storage";
 
 const BEST_KEY = "dodge-king:best";
 const MAX_DT = 0.05;
+const DEATH_TIME = 0.9;
+const DEATH_SLOWMO = 0.3;
 
 function getCanvas() {
 	const canvas = document.querySelector<HTMLCanvasElement>("#game");
@@ -26,7 +29,7 @@ function getCanvas() {
 }
 
 const { canvas, ctx } = getCanvas();
-const readInput = bindInput(canvas);
+const readInput = bindInput(canvas, (x, y) => buttonAt(screen, x, y) !== null);
 let game = createGame();
 const fx = createEffects(
 	matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -34,6 +37,7 @@ const fx = createEffects(
 let screen: Screen = "title";
 let best = Number(load(BEST_KEY)) || 0;
 let newBest = false;
+let deathTimer = 0;
 let last = performance.now();
 
 function resize() {
@@ -45,6 +49,8 @@ function resize() {
 
 function advance() {
 	unlockAudio();
+	readInput();
+	if (screen === "dying") return;
 	if (screen === "paused") {
 		screen = "playing";
 		startMusic(false);
@@ -63,8 +69,14 @@ function pause() {
 	stopMusic();
 }
 
+function togglePause() {
+	if (screen === "playing") pause();
+	else if (screen === "paused") advance();
+}
+
 function gameOver() {
-	screen = "over";
+	screen = "dying";
+	deathTimer = DEATH_TIME;
 	stopMusic();
 	const score = scoreOf(game);
 	if (score > best) {
@@ -79,13 +91,19 @@ function frame(now: number) {
 	last = now;
 	if (screen === "playing") {
 		for (const event of update(game, readInput(), dt)) {
-			playSound(event.type);
+			playSound(event.type, event.combo);
 			emit(fx, event);
 			if (event.type === "level") setTempo(game.level);
 			if (event.type === "hit") gameOver();
 		}
 	}
-	if (screen !== "paused") stepEffects(fx, dt);
+	if (screen === "dying") {
+		deathTimer -= dt;
+		if (deathTimer <= 0) screen = "over";
+	}
+	if (screen !== "paused") {
+		stepEffects(fx, screen === "dying" ? dt * DEATH_SLOWMO : dt);
+	}
 	draw(ctx, {
 		screen,
 		game,
@@ -105,8 +123,7 @@ window.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		advance();
 	} else if (e.code === "Escape" || e.code === "KeyP") {
-		if (screen === "playing") pause();
-		else if (screen === "paused") advance();
+		togglePause();
 	} else if (e.code === "KeyM") {
 		toggleMute();
 	} else if (e.code === "KeyN") {
@@ -114,8 +131,14 @@ window.addEventListener("keydown", (e) => {
 	}
 });
 
-canvas.addEventListener("pointerdown", () => {
-	if (screen !== "playing") advance();
+canvas.addEventListener("pointerdown", (e) => {
+	const { x, y } = toWorld(canvas, e);
+	const button = buttonAt(screen, x, y);
+	if (button === "pause") togglePause();
+	else if (button === "sound") toggleMute();
+	else if (button === "music") toggleMusic();
+	else if (screen !== "playing") advance();
+	unlockAudio();
 });
 
 document.addEventListener("visibilitychange", () => {

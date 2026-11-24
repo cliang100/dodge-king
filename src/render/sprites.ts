@@ -16,6 +16,8 @@ const PALETTE: Record<string, string> = {
 	f: "#ff5d73",
 	n: "#c08552",
 	m: "#e8e8f0",
+	o: "#ff7b25",
+	B: "#3a3350",
 	c: "#1d6fa5",
 	C: "#4cc9f0",
 };
@@ -90,7 +92,7 @@ export const bat = [
 	]),
 ];
 
-export const boulder = build([
+const boulderRows = [
 	".....gggggg.....",
 	"...ggGGGGGGgg...",
 	"..gGGGGGGGGGGg..",
@@ -107,7 +109,13 @@ export const boulder = build([
 	"..gGGGGGGGGGGg..",
 	"...ggGGGGGGgg...",
 	".....gggggg.....",
-]);
+];
+
+export const boulder = build(boulderRows);
+
+export const splitter = build(
+	boulderRows.map((row) => row.replace(/d/g, "o").replace(/h/g, "y")),
+);
 
 export const arrow = build([
 	"ff........m...",
@@ -163,6 +171,43 @@ export const shield = build([
 	".cCCCCCCc.",
 	"..cCCCCc..",
 	"....cc....",
+]);
+
+export const magnet = build([
+	".mm....mm.",
+	".mm....mm.",
+	".rr....rr.",
+	".rr....rr.",
+	".rr....rr.",
+	".rrr..rrr.",
+	"..rrrrrr..",
+	"...RRRR...",
+]);
+
+export const hourglass = build([
+	"nnnnnnnnnn",
+	".CyyyyyyC.",
+	".CCyyyyCC.",
+	"..CCyyCC..",
+	"...CyyC...",
+	"...CCyC...",
+	"..CCCyCC..",
+	".CCCyyCCC.",
+	".CyyyyyyC.",
+	"nnnnnnnnnn",
+]);
+
+export const bomb = build([
+	"......yf..",
+	".....n....",
+	"....n.....",
+	"..BBBBBB..",
+	".BBhBBBBB.",
+	".BhBBBBBB.",
+	".BBBBBBBB.",
+	".BBBBBBBB.",
+	"..BBBBBB..",
+	"...BBBB...",
 ]);
 
 export function drawSprite(
