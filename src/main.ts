@@ -18,6 +18,8 @@ import { load, save } from "./storage";
 
 const BEST_KEY = "dodge-king:best";
 const MAX_DT = 0.05;
+const DEATH_TIME = 0.9;
+const DEATH_SLOWMO = 0.3;
 
 function getCanvas() {
 	const canvas = document.querySelector<HTMLCanvasElement>("#game");
@@ -35,6 +37,7 @@ const fx = createEffects(
 let screen: Screen = "title";
 let best = Number(load(BEST_KEY)) || 0;
 let newBest = false;
+let deathTimer = 0;
 let last = performance.now();
 
 function resize() {
@@ -47,6 +50,7 @@ function resize() {
 function advance() {
 	unlockAudio();
 	readInput();
+	if (screen === "dying") return;
 	if (screen === "paused") {
 		screen = "playing";
 		startMusic(false);
@@ -71,7 +75,8 @@ function togglePause() {
 }
 
 function gameOver() {
-	screen = "over";
+	screen = "dying";
+	deathTimer = DEATH_TIME;
 	stopMusic();
 	const score = scoreOf(game);
 	if (score > best) {
@@ -92,7 +97,13 @@ function frame(now: number) {
 			if (event.type === "hit") gameOver();
 		}
 	}
-	if (screen !== "paused") stepEffects(fx, dt);
+	if (screen === "dying") {
+		deathTimer -= dt;
+		if (deathTimer <= 0) screen = "over";
+	}
+	if (screen !== "paused") {
+		stepEffects(fx, screen === "dying" ? dt * DEATH_SLOWMO : dt);
+	}
 	draw(ctx, {
 		screen,
 		game,

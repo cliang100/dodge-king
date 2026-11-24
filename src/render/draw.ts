@@ -7,7 +7,7 @@ import { BANNER_TIME, type Effects, FLASH_TIME } from "./effects";
 import * as sprites from "./sprites";
 import { drawSprite } from "./sprites";
 
-export type Screen = "title" | "playing" | "paused" | "over";
+export type Screen = "title" | "playing" | "paused" | "dying" | "over";
 
 export interface View {
 	screen: Screen;
@@ -319,7 +319,7 @@ function drawOverlay(
 
 export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	const { game } = v;
-	const alive = v.screen !== "over";
+	const alive = v.screen !== "dying" && v.screen !== "over";
 	const shake = v.fx.shake;
 	ctx.imageSmoothingEnabled = false;
 	ctx.save();
