@@ -11,6 +11,7 @@ import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
 import { bindInput, toWorld } from "./input/input";
+import { clearPendingScore, offerScore, openLeaderboard } from "./leaderboard";
 import { buttonAt } from "./render/buttons";
 import { draw, type Screen } from "./render/draw";
 import { createEffects, emit, stepEffects } from "./render/effects";
@@ -59,6 +60,7 @@ function advance() {
 	} else {
 		game = createGame();
 		newBest = false;
+		clearPendingScore();
 		screen = "playing";
 		playSound("start");
 		setTempo(1);
@@ -101,7 +103,10 @@ function frame(now: number) {
 	}
 	if (screen === "dying") {
 		deathTimer -= dt;
-		if (deathTimer <= 0) screen = "over";
+		if (deathTimer <= 0) {
+			screen = "over";
+			offerScore(scoreOf(game), () => screen === "over");
+		}
 	}
 	if (screen !== "paused") {
 		stepEffects(fx, screen === "dying" ? dt * DEATH_SLOWMO : dt);
@@ -132,6 +137,8 @@ window.addEventListener("keydown", (e) => {
 		toggleMute();
 	} else if (e.code === "KeyN") {
 		toggleMusic();
+	} else if (e.code === "KeyL" && (screen === "title" || screen === "over")) {
+		openLeaderboard();
 	}
 });
 
@@ -141,6 +148,7 @@ canvas.addEventListener("pointerdown", (e) => {
 	if (button === "pause") togglePause();
 	else if (button === "sound") toggleMute();
 	else if (button === "music") toggleMusic();
+	else if (button === "scores") openLeaderboard();
 	else if (screen !== "playing") advance();
 	unlockAudio();
 });

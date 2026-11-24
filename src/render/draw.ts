@@ -367,8 +367,8 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 					],
 					[
 						v.touch
-							? "Pause, sound, music: bottom right"
-							: "Esc: pause   M: sound   N: music",
+							? "Scores, sound, music, pause: bottom right"
+							: "Esc: pause   M: sound   N: music   L: scores",
 						18,
 						COLORS.dim,
 					],

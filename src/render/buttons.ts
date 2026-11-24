@@ -1,7 +1,7 @@
 import { HEIGHT, WIDTH } from "../game/world";
 import type { Screen } from "./draw";
 
-export type ButtonId = "music" | "sound" | "pause";
+export type ButtonId = "scores" | "music" | "sound" | "pause";
 
 export interface ButtonState {
 	screen: Screen;
@@ -13,7 +13,7 @@ export interface ButtonState {
 const SIZE = 56;
 const GAP = 12;
 const MARGIN = 14;
-const IDS: ButtonId[] = ["music", "sound", "pause"];
+const IDS: ButtonId[] = ["scores", "music", "sound", "pause"];
 
 const buttons = IDS.map((id, i) => ({
 	id,
@@ -22,9 +22,11 @@ const buttons = IDS.map((id, i) => ({
 }));
 
 const visible = (screen: Screen) =>
-	buttons.filter(
-		(b) => b.id !== "pause" || screen === "playing" || screen === "paused",
-	);
+	buttons.filter(({ id }) => {
+		if (id === "pause") return screen === "playing" || screen === "paused";
+		if (id === "scores") return screen === "title" || screen === "over";
+		return true;
+	});
 
 export const buttonAt = (screen: Screen, x: number, y: number) =>
 	visible(screen).find(
@@ -40,6 +42,11 @@ function slash(ctx: CanvasRenderingContext2D) {
 
 function drawIcon(ctx: CanvasRenderingContext2D, id: ButtonId, s: ButtonState) {
 	switch (id) {
+		case "scores":
+			ctx.fillRect(-15, 0, 9, 13);
+			ctx.fillRect(-4.5, -13, 9, 26);
+			ctx.fillRect(6, 4, 9, 9);
+			break;
 		case "pause":
 			if (s.screen === "paused") {
 				ctx.beginPath();
