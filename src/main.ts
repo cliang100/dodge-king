@@ -86,7 +86,7 @@ function frame(now: number) {
 	last = now;
 	if (screen === "playing") {
 		for (const event of update(game, readInput(), dt)) {
-			playSound(event.type);
+			playSound(event.type, event.combo);
 			emit(fx, event);
 			if (event.type === "level") setTempo(game.level);
 			if (event.type === "hit") gameOver();

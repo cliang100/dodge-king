@@ -17,6 +17,8 @@ const DASH_TIME = 0.15;
 export const DASH_COOLDOWN = 1.2;
 const LEVEL_TIME = 15;
 export const COIN_POINTS = 50;
+const COMBO_WINDOW = 2;
+const MAX_COMBO = 5;
 const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
 const POWER_UP_CHANCE = 0.2;
@@ -60,12 +62,15 @@ export interface GameEvent {
 	type: Pickup["kind"] | "block" | "hit" | "level" | "dash" | "split";
 	x: number;
 	y: number;
+	combo?: number;
 }
 
 export interface GameState {
 	time: number;
 	level: number;
-	coins: number;
+	bonus: number;
+	combo: number;
+	comboTimer: number;
 	player: Player;
 	hazards: Hazard[];
 	warnings: Warning[];
@@ -80,7 +85,9 @@ export function createGame(): GameState {
 	return {
 		time: 0,
 		level: 1,
-		coins: 0,
+		bonus: 0,
+		combo: 0,
+		comboTimer: 0,
 		player: {
 			x: WIDTH / 2,
 			y: HEIGHT / 2,
@@ -103,8 +110,7 @@ export function createGame(): GameState {
 }
 
 export const levelAt = (time: number) => 1 + Math.floor(time / LEVEL_TIME);
-export const scoreOf = (s: GameState) =>
-	Math.floor(s.time * 10) + s.coins * COIN_POINTS;
+export const scoreOf = (s: GameState) => Math.floor(s.time * 10) + s.bonus;
 
 const clamp = (v: number, min: number, max: number) =>
 	Math.min(max, Math.max(min, v));
@@ -180,10 +186,14 @@ function pullCoins(pickups: Pickup[], to: Circle, dt: number) {
 	}
 }
 
-function collect(s: GameState, kind: Pickup["kind"]) {
-	switch (kind) {
+function collect(s: GameState, p: Pickup): GameEvent {
+	const event: GameEvent = { type: p.kind, x: p.x, y: p.y };
+	switch (p.kind) {
 		case "coin":
-			s.coins++;
+			s.combo = s.comboTimer > 0 ? Math.min(MAX_COMBO, s.combo + 1) : 1;
+			s.comboTimer = COMBO_WINDOW;
+			s.bonus += COIN_POINTS * s.combo;
+			event.combo = s.combo;
 			break;
 		case "shield":
 			s.player.shield = true;
@@ -199,6 +209,7 @@ function collect(s: GameState, kind: Pickup["kind"]) {
 			s.warnings = [];
 			break;
 	}
+	return event;
 }
 
 export function update(
@@ -248,14 +259,14 @@ export function update(
 	for (const h of splitting) events.push({ type: "split", x: h.x, y: h.y });
 	s.hazards = [...s.hazards.filter(isAlive), ...splitting.flatMap(split)];
 
+	s.comboTimer = Math.max(0, s.comboTimer - dt);
 	s.magnet = Math.max(0, s.magnet - dt);
 	if (s.magnet > 0) pullCoins(s.pickups, player, dt);
 
 	s.pickups = s.pickups.filter((p) => {
 		p.ttl -= dt;
 		if (!overlaps(player, p)) return p.ttl > 0;
-		collect(s, p.kind);
-		events.push({ type: p.kind, x: p.x, y: p.y });
+		events.push(collect(s, p));
 		return false;
 	});
 

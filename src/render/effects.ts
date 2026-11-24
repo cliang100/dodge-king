@@ -43,7 +43,6 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		speed: 120,
 		colors: ["#ffd23f", "#fff3b0"],
 		shake: 0,
-		text: `+${COIN_POINTS}`,
 	},
 	shield: {
 		count: 14,
@@ -116,11 +115,16 @@ export function emit(fx: Effects, event: GameEvent, rng: Rng = Math.random) {
 			color: burst.colors[i % burst.colors.length] ?? "#fff",
 		});
 	}
-	if (burst.text) {
+	const combo = event.combo ?? 1;
+	const text =
+		event.type === "coin"
+			? `+${COIN_POINTS * combo}${combo > 1 ? ` x${combo}` : ""}`
+			: burst.text;
+	if (text) {
 		fx.texts.push({
 			x: event.x,
 			y: event.y - 20,
-			text: burst.text,
+			text,
 			life: 0.8,
 			color: burst.colors[0] ?? "#fff",
 		});

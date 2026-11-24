@@ -290,6 +290,10 @@ function drawHud(ctx: CanvasRenderingContext2D, v: View) {
 	];
 	ctx.textAlign = "left";
 	let y = 42;
+	if (v.game.combo > 1 && v.game.comboTimer > 0) {
+		text(ctx, `COMBO x${v.game.combo}`, 16, y, 14, COLORS.coin);
+		y += 20;
+	}
 	for (const [label, remaining, color] of timers) {
 		if (remaining <= 0) continue;
 		text(ctx, `${label} ${Math.ceil(remaining)}`, 16, y, 14, color);

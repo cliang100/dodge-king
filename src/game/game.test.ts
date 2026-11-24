@@ -107,9 +107,30 @@ describe("game", () => {
 			ttl: 5,
 		});
 		expect(types(update(s, idle, 0.01, rng))).toContain("coin");
-		expect(s.coins).toBe(1);
 		expect(s.pickups).toHaveLength(0);
 		expect(scoreOf(s)).toBe(50);
+	});
+
+	it("multiplies coin points for quick pickups, then resets", () => {
+		const s = createGame();
+		const coin = () =>
+			s.pickups.push({
+				kind: "coin",
+				x: s.player.x,
+				y: s.player.y,
+				r: 10,
+				ttl: 5,
+			});
+		coin();
+		update(s, idle, 0.01, rng);
+		coin();
+		update(s, idle, 0.01, rng);
+		expect(s.combo).toBe(2);
+		expect(s.bonus).toBe(150);
+		update(s, idle, 3, () => 0);
+		coin();
+		update(s, idle, 0.01, rng);
+		expect(s.combo).toBe(1);
 	});
 
 	it("magnet pulls nearby coins toward the player", () => {
