@@ -1,12 +1,13 @@
-import { type Circle, HEIGHT, type Rng, WIDTH } from "./world";
+import { type Circle, HEIGHT, overlaps, type Rng, WIDTH } from "./world";
 
-export type HazardKind = "arrow" | "boulder" | "bat";
+export type HazardKind = "arrow" | "boulder" | "bat" | "laser";
 
 export interface Hazard extends Circle {
 	kind: HazardKind;
 	vx: number;
 	vy: number;
 	ttl: number;
+	vertical?: boolean;
 }
 
 const SPAWN_MARGIN = 30;
@@ -19,6 +20,7 @@ const STATS: Record<
 	arrow: { r: 5, speed: 230, spread: 0.3, ttl: 8 },
 	boulder: { r: 18, speed: 150, spread: 0.8, ttl: 10 },
 	bat: { r: 10, speed: 95, spread: 0, ttl: 7 },
+	laser: { r: 10, speed: 0, spread: 0, ttl: 0.6 },
 };
 
 export const speedScale = (level: number) => 1 + 0.12 * (level - 1);
@@ -26,6 +28,7 @@ export const hazardInterval = (level: number) =>
 	Math.max(0.25, 1.1 * 0.85 ** (level - 1));
 
 export function unlockedKinds(level: number): HazardKind[] {
+	if (level >= 4) return ["arrow", "boulder", "bat", "laser"];
 	if (level >= 3) return ["arrow", "boulder", "bat"];
 	if (level >= 2) return ["arrow", "boulder"];
 	return ["arrow"];
@@ -49,6 +52,12 @@ export function spawnHazard(level: number, target: Circle, rng: Rng): Hazard {
 	const kinds = unlockedKinds(level);
 	const kind = kinds[Math.floor(rng() * kinds.length)] ?? "arrow";
 	const { r, speed, spread, ttl } = STATS[kind];
+	if (kind === "laser") {
+		const vertical = rng() < 0.5;
+		const x = vertical ? target.x : 0;
+		const y = vertical ? 0 : target.y;
+		return { kind, x, y, r, vx: 0, vy: 0, ttl, vertical };
+	}
 	const { x, y } = edgePoint(rng);
 	const angle = Math.atan2(target.y - y, target.x - x) + (rng() - 0.5) * spread;
 	const v = speed * speedScale(level);
@@ -86,6 +95,12 @@ export function moveHazard(
 		if ((h.y < h.r && h.vy < 0) || (h.y > HEIGHT - h.r && h.vy > 0))
 			h.vy = -h.vy;
 	}
+}
+
+export function hits(c: Circle, h: Hazard) {
+	if (h.kind !== "laser") return overlaps(c, h);
+	const gap = h.vertical ? Math.abs(c.x - h.x) : Math.abs(c.y - h.y);
+	return gap < c.r + h.r;
 }
 
 export const isAlive = (h: Hazard) =>

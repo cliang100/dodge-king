@@ -8,3 +8,6 @@ export interface Circle {
 	y: number;
 	r: number;
 }
+
+export const overlaps = (a: Circle, b: Circle) =>
+	(a.x - b.x) ** 2 + (a.y - b.y) ** 2 < (a.r + b.r) ** 2;

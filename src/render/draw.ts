@@ -29,6 +29,7 @@ const COLORS = {
 	dim: "#9a96b0",
 	overlay: "rgba(10, 9, 18, 0.6)",
 	warning: "#ff4d6d",
+	laser: "rgba(255, 77, 109, 0.55)",
 	outline: "rgba(10, 9, 18, 0.75)",
 };
 
@@ -143,10 +144,32 @@ function drawHazard(ctx: CanvasRenderingContext2D, h: Hazard) {
 		case "bat":
 			drawSprite(ctx, frame(sprites.bat, h.ttl * 10), h.x, h.y, 2);
 			break;
+		case "laser":
+			ctx.globalAlpha = Math.min(1, h.ttl * 8);
+			laserLine(ctx, h, h.r * 2 + 6, COLORS.laser);
+			laserLine(ctx, h, 4 + Math.random() * 3, COLORS.text);
+			ctx.globalAlpha = 1;
+			break;
 	}
 }
 
+function laserLine(
+	ctx: CanvasRenderingContext2D,
+	h: Hazard,
+	width: number,
+	color: string,
+) {
+	ctx.fillStyle = color;
+	if (h.vertical) ctx.fillRect(h.x - width / 2, 0, width, HEIGHT);
+	else ctx.fillRect(0, h.y - width / 2, WIDTH, width);
+}
+
 function drawWarning(ctx: CanvasRenderingContext2D, w: Warning) {
+	if (w.hazard.kind === "laser") {
+		ctx.globalAlpha = 0.35;
+		laserLine(ctx, w.hazard, 2, COLORS.warning);
+		ctx.globalAlpha = 1;
+	}
 	if (Math.floor(w.delay * 10) % 2 === 0) return;
 	const m = 18;
 	const x = Math.min(WIDTH - m, Math.max(m, w.hazard.x));
@@ -256,7 +279,8 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	ctx.save();
 	ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
 	drawBackground(ctx, game.level);
-	for (const c of [...game.pickups, ...game.hazards]) drawShadow(ctx, c);
+	const grounded = game.hazards.filter((h) => h.kind !== "laser");
+	for (const c of [...game.pickups, ...grounded]) drawShadow(ctx, c);
 	if (alive) drawShadow(ctx, game.player);
 	for (const p of game.pickups) drawPickup(ctx, p, game.time);
 	for (const h of game.hazards) drawHazard(ctx, h);

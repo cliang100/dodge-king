@@ -1,11 +1,12 @@
 import {
 	type Hazard,
 	hazardInterval,
+	hits,
 	isAlive,
 	moveHazard,
 	spawnHazard,
 } from "./hazards";
-import { type Circle, HEIGHT, type Rng, WIDTH } from "./world";
+import { type Circle, HEIGHT, overlaps, type Rng, WIDTH } from "./world";
 
 const PLAYER_SPEED = 260;
 const DRAG_SPEED = 900;
@@ -88,8 +89,6 @@ export function createGame(): GameState {
 	};
 }
 
-export const overlaps = (a: Circle, b: Circle) =>
-	(a.x - b.x) ** 2 + (a.y - b.y) ** 2 < (a.r + b.r) ** 2;
 export const levelAt = (time: number) => 1 + Math.floor(time / LEVEL_TIME);
 export const scoreOf = (s: GameState) =>
 	Math.floor(s.time * 10) + s.coins * COIN_POINTS;
@@ -196,7 +195,7 @@ export function update(
 	});
 
 	if (player.invulnerable > 0 || player.dashTime > 0) return events;
-	const hit = s.hazards.find((h) => overlaps(player, h));
+	const hit = s.hazards.find((h) => hits(player, h));
 	if (!hit) return events;
 	if (player.shield) {
 		player.shield = false;

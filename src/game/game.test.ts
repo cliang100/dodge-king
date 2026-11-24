@@ -5,19 +5,19 @@ import {
 	type GameEvent,
 	type Input,
 	levelAt,
-	overlaps,
 	scoreOf,
 	update,
 	WARNING_TIME,
 } from "./game";
 import {
 	hazardInterval,
+	hits,
 	isAlive,
 	moveHazard,
 	spawnHazard,
 	unlockedKinds,
 } from "./hazards";
-import { HEIGHT, WIDTH } from "./world";
+import { HEIGHT, overlaps, WIDTH } from "./world";
 
 const idle: Input = { dx: 0, dy: 0, drag: { x: 0, y: 0 }, dash: false };
 const rng = () => 0.5;
@@ -150,6 +150,7 @@ describe("hazards", () => {
 	it("unlocks new kinds as the level rises", () => {
 		expect(unlockedKinds(1)).toEqual(["arrow"]);
 		expect(unlockedKinds(3)).toContain("bat");
+		expect(unlockedKinds(4)).toContain("laser");
 	});
 
 	it("spawns faster at higher levels, with a floor", () => {
@@ -178,6 +179,15 @@ describe("hazards", () => {
 		};
 		moveHazard(h, { x: 400, y: 300, r: 14 }, 1, 0.01);
 		expect(h.vx).toBe(100);
+	});
+
+	it("lasers hit anywhere along their line", () => {
+		const target = { x: 300, y: 200, r: 14 };
+		const laser = spawnHazard(4, target, () => 0.99);
+		expect(laser.kind).toBe("laser");
+		expect(hits({ x: 300, y: 550, r: 14 }, laser)).toBe(laser.vertical);
+		expect(hits({ x: 700, y: 200, r: 14 }, laser)).toBe(!laser.vertical);
+		expect(hits({ x: 700, y: 550, r: 14 }, laser)).toBe(false);
 	});
 
 	it("removes hazards that leave the arena or expire", () => {
