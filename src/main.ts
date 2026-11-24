@@ -10,7 +10,8 @@ import {
 import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
-import { bindInput } from "./input/input";
+import { bindInput, toWorld } from "./input/input";
+import { buttonAt } from "./render/buttons";
 import { draw, type Screen } from "./render/draw";
 import { createEffects, emit, stepEffects } from "./render/effects";
 import { load, save } from "./storage";
@@ -26,7 +27,7 @@ function getCanvas() {
 }
 
 const { canvas, ctx } = getCanvas();
-const readInput = bindInput(canvas);
+const readInput = bindInput(canvas, (x, y) => buttonAt(screen, x, y) !== null);
 let game = createGame();
 const fx = createEffects(
 	matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -61,6 +62,11 @@ function advance() {
 function pause() {
 	screen = "paused";
 	stopMusic();
+}
+
+function togglePause() {
+	if (screen === "playing") pause();
+	else if (screen === "paused") advance();
 }
 
 function gameOver() {
@@ -105,8 +111,7 @@ window.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		advance();
 	} else if (e.code === "Escape" || e.code === "KeyP") {
-		if (screen === "playing") pause();
-		else if (screen === "paused") advance();
+		togglePause();
 	} else if (e.code === "KeyM") {
 		toggleMute();
 	} else if (e.code === "KeyN") {
@@ -114,8 +119,14 @@ window.addEventListener("keydown", (e) => {
 	}
 });
 
-canvas.addEventListener("pointerdown", () => {
-	if (screen !== "playing") advance();
+canvas.addEventListener("pointerdown", (e) => {
+	const { x, y } = toWorld(canvas, e);
+	const button = buttonAt(screen, x, y);
+	if (button === "pause") togglePause();
+	else if (button === "sound") toggleMute();
+	else if (button === "music") toggleMusic();
+	else if (screen !== "playing") advance();
+	unlockAudio();
 });
 
 document.addEventListener("visibilitychange", () => {

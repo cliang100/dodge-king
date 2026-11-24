@@ -2,6 +2,7 @@ import type { GameState, Pickup, Player } from "../game/game";
 import { scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
+import { drawButtons } from "./buttons";
 import { BANNER_TIME, type Effects } from "./effects";
 import * as sprites from "./sprites";
 import { drawSprite } from "./sprites";
@@ -188,16 +189,6 @@ function drawHud(ctx: CanvasRenderingContext2D, v: View) {
 	text(ctx, `Level ${v.game.level}`, WIDTH / 2, 14, 20);
 	ctx.textAlign = "right";
 	text(ctx, `Best ${v.best}`, WIDTH - 16, 14, 20);
-	ctx.textBaseline = "bottom";
-	ctx.textAlign = "left";
-	text(
-		ctx,
-		`M sound ${v.muted ? "off" : "on"}   N music ${v.music ? "on" : "off"}`,
-		16,
-		HEIGHT - 12,
-		14,
-		COLORS.dim,
-	);
 }
 
 function drawOverlay(
@@ -273,4 +264,5 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 			]);
 			break;
 	}
+	drawButtons(ctx, v);
 }
