@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	createGame,
+	DASH_COOLDOWN,
 	type GameEvent,
 	type Input,
 	levelAt,
@@ -18,7 +19,7 @@ import {
 } from "./hazards";
 import { HEIGHT, WIDTH } from "./world";
 
-const idle: Input = { dx: 0, dy: 0, drag: { x: 0, y: 0 } };
+const idle: Input = { dx: 0, dy: 0, drag: { x: 0, y: 0 }, dash: false };
 const rng = () => 0.5;
 const types = (events: GameEvent[]) => events.map((e) => e.type);
 
@@ -62,6 +63,38 @@ describe("game", () => {
 		update(s, idle, WARNING_TIME, rng);
 		expect(s.warnings).toHaveLength(0);
 		expect(s.hazards).toHaveLength(1);
+	});
+
+	it("dashes in the facing direction, then cools down", () => {
+		const s = createGame();
+		const y = s.player.y;
+		expect(types(update(s, { ...idle, dash: true }, 0.05, rng))).toContain(
+			"dash",
+		);
+		expect(s.player.y).toBeCloseTo(y - 40);
+		update(s, idle, 0.1, rng);
+		expect(types(update(s, { ...idle, dash: true }, 0.05, rng))).not.toContain(
+			"dash",
+		);
+		update(s, idle, DASH_COOLDOWN, rng);
+		expect(types(update(s, { ...idle, dash: true }, 0.05, rng))).toContain(
+			"dash",
+		);
+	});
+
+	it("cannot be hit mid-dash", () => {
+		const s = createGame();
+		s.player.dashTime = 0.1;
+		s.hazards.push({
+			kind: "boulder",
+			x: s.player.x,
+			y: s.player.y,
+			r: 18,
+			vx: 0,
+			vy: 0,
+			ttl: 5,
+		});
+		expect(types(update(s, idle, 0.01, rng))).not.toContain("hit");
 	});
 
 	it("collects coins for points", () => {

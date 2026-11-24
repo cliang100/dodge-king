@@ -59,6 +59,7 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		shake: 14,
 	},
 	level: { count: 0, speed: 0, colors: [], shake: 0 },
+	dash: { count: 8, speed: 90, colors: ["#ffffff", "#c8c3ff"], shake: 0 },
 };
 
 const GRAVITY = 300;

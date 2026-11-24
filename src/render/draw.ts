@@ -1,5 +1,5 @@
 import type { GameState, Pickup, Player, Warning } from "../game/game";
-import { scoreOf } from "../game/game";
+import { DASH_COOLDOWN, scoreOf } from "../game/game";
 import type { Hazard } from "../game/hazards";
 import { type Circle, HEIGHT, WIDTH } from "../game/world";
 import { drawButtons } from "./buttons";
@@ -99,7 +99,28 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: Player, time: number) {
 		? frame(sprites.kingWalk, time * 8)
 		: sprites.kingIdle;
 	const bob = p.moving ? Math.abs(Math.sin(time * 16)) * 2 : Math.sin(time * 3);
+	if (p.dashTime > 0) {
+		for (let i = 3; i > 0; i--) {
+			ctx.globalAlpha = 0.15 * (4 - i);
+			const gx = p.x - p.dir.x * i * 14;
+			const gy = p.y - p.dir.y * i * 14;
+			drawSprite(ctx, sprite, gx, gy - 4, 2.25);
+		}
+		ctx.globalAlpha = 1;
+	}
 	drawSprite(ctx, sprite, p.x, p.y - 4 - bob, 2.25);
+	if (p.dashCooldown > 0) {
+		const w = 28;
+		ctx.fillStyle = COLORS.outline;
+		ctx.fillRect(p.x - w / 2, p.y + p.r + 10, w, 4);
+		ctx.fillStyle = COLORS.text;
+		ctx.fillRect(
+			p.x - w / 2,
+			p.y + p.r + 10,
+			w * (1 - p.dashCooldown / DASH_COOLDOWN),
+			4,
+		);
+	}
 	if (p.shield) {
 		ctx.strokeStyle = COLORS.shield;
 		ctx.lineWidth = 2;
@@ -253,6 +274,7 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 				[
 					["DODGE KING", 64, COLORS.crown],
 					["Move: WASD, arrow keys, or drag", 18, COLORS.dim],
+					["Dash: Shift, Space, or double-tap", 18, COLORS.dim],
 					["Esc: pause   M: sound   N: music", 18, COLORS.dim],
 					["Press Enter or tap to start", 22],
 				],

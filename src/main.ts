@@ -46,6 +46,7 @@ function resize() {
 
 function advance() {
 	unlockAudio();
+	readInput();
 	if (screen === "paused") {
 		screen = "playing";
 		startMusic(false);

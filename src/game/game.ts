@@ -9,6 +9,9 @@ import { type Circle, HEIGHT, type Rng, WIDTH } from "./world";
 
 const PLAYER_SPEED = 260;
 const DRAG_SPEED = 900;
+const DASH_SPEED = 800;
+const DASH_TIME = 0.15;
+export const DASH_COOLDOWN = 1.2;
 const LEVEL_TIME = 15;
 export const COIN_POINTS = 50;
 const PICKUP_INTERVAL = 2.5;
@@ -21,6 +24,9 @@ export interface Player extends Circle {
 	shield: boolean;
 	invulnerable: number;
 	moving: boolean;
+	dir: { x: number; y: number };
+	dashTime: number;
+	dashCooldown: number;
 }
 
 export interface Pickup extends Circle {
@@ -32,6 +38,7 @@ export interface Input {
 	dx: number;
 	dy: number;
 	drag: { x: number; y: number };
+	dash: boolean;
 }
 
 export interface Warning {
@@ -40,7 +47,7 @@ export interface Warning {
 }
 
 export interface GameEvent {
-	type: "coin" | "shield" | "block" | "hit" | "level";
+	type: "coin" | "shield" | "block" | "hit" | "level" | "dash";
 	x: number;
 	y: number;
 }
@@ -69,6 +76,9 @@ export function createGame(): GameState {
 			shield: false,
 			invulnerable: 0,
 			moving: false,
+			dir: { x: 0, y: -1 },
+			dashTime: 0,
+			dashCooldown: 0,
 		},
 		hazards: [],
 		warnings: [],
@@ -87,11 +97,23 @@ export const scoreOf = (s: GameState) =>
 const clamp = (v: number, min: number, max: number) =>
 	Math.min(max, Math.max(min, v));
 
-function movePlayer(p: Player, input: Input, dt: number) {
+function movePlayer(p: Player, input: Input, dt: number): boolean {
+	p.invulnerable = Math.max(0, p.invulnerable - dt);
+	p.dashCooldown = Math.max(0, p.dashCooldown - dt);
+	const dashed = input.dash && p.dashCooldown === 0;
+	if (dashed) {
+		p.dashTime = DASH_TIME;
+		p.dashCooldown = DASH_COOLDOWN;
+	}
+
 	const { drag } = input;
 	const dragLen = Math.hypot(drag.x, drag.y);
 	const keyLen = Math.hypot(input.dx, input.dy);
-	if (dragLen > 0) {
+	if (p.dashTime > 0) {
+		p.dashTime -= dt;
+		p.x += p.dir.x * DASH_SPEED * dt;
+		p.y += p.dir.y * DASH_SPEED * dt;
+	} else if (dragLen > 0) {
 		const k = Math.min(1, (DRAG_SPEED * dt) / dragLen);
 		p.x += drag.x * k;
 		p.y += drag.y * k;
@@ -100,10 +122,12 @@ function movePlayer(p: Player, input: Input, dt: number) {
 		p.x += input.dx * k;
 		p.y += input.dy * k;
 	}
-	p.moving = dragLen > 0.5 || keyLen > 0;
+	if (dragLen > 0.5) p.dir = { x: drag.x / dragLen, y: drag.y / dragLen };
+	else if (keyLen > 0) p.dir = { x: input.dx / keyLen, y: input.dy / keyLen };
+	p.moving = dragLen > 0.5 || keyLen > 0 || p.dashTime > 0;
 	p.x = clamp(p.x, p.r, WIDTH - p.r);
 	p.y = clamp(p.y, p.r, HEIGHT - p.r);
-	p.invulnerable = Math.max(0, p.invulnerable - dt);
+	return dashed;
 }
 
 function spawnPickup(s: GameState, rng: Rng): Pickup | null {
@@ -137,7 +161,9 @@ export function update(
 		events.push({ type: "level", x: player.x, y: player.y });
 	}
 
-	movePlayer(player, input, dt);
+	if (movePlayer(player, input, dt)) {
+		events.push({ type: "dash", x: player.x, y: player.y });
+	}
 
 	for (const w of s.warnings) w.delay -= dt;
 	for (const w of s.warnings) if (w.delay <= 0) s.hazards.push(w.hazard);
@@ -169,7 +195,7 @@ export function update(
 		return false;
 	});
 
-	if (player.invulnerable > 0) return events;
+	if (player.invulnerable > 0 || player.dashTime > 0) return events;
 	const hit = s.hazards.find((h) => overlaps(player, h));
 	if (!hit) return events;
 	if (player.shield) {
