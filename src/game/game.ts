@@ -23,6 +23,8 @@ const POWER_UP_CHANCE = 0.2;
 const MAGNET_TIME = 6;
 export const MAGNET_RANGE = 220;
 const MAGNET_PULL = 320;
+const SLOW_TIME = 5;
+const SLOW_FACTOR = 0.5;
 const INVULNERABLE_TIME = 1;
 export const WARNING_TIME = 0.7;
 
@@ -35,7 +37,7 @@ export interface Player extends Circle {
 	dashCooldown: number;
 }
 
-export type PowerUp = "shield" | "magnet";
+export type PowerUp = "shield" | "magnet" | "slow";
 
 export interface Pickup extends Circle {
 	kind: "coin" | PowerUp;
@@ -71,6 +73,7 @@ export interface GameState {
 	hazardTimer: number;
 	pickupTimer: number;
 	magnet: number;
+	slow: number;
 }
 
 export function createGame(): GameState {
@@ -95,6 +98,7 @@ export function createGame(): GameState {
 		hazardTimer: 1,
 		pickupTimer: PICKUP_INTERVAL,
 		magnet: 0,
+		slow: 0,
 	};
 }
 
@@ -141,6 +145,7 @@ function movePlayer(p: Player, input: Input, dt: number): boolean {
 const isActive: Record<PowerUp, (s: GameState) => boolean> = {
 	shield: (s) => s.player.shield,
 	magnet: (s) => s.magnet > 0,
+	slow: (s) => s.slow > 0,
 };
 
 function spawnPickup(s: GameState, rng: Rng): Pickup | null {
@@ -185,6 +190,9 @@ function collect(s: GameState, kind: Pickup["kind"]) {
 		case "magnet":
 			s.magnet = MAGNET_TIME;
 			break;
+		case "slow":
+			s.slow = SLOW_TIME;
+			break;
 	}
 }
 
@@ -208,11 +216,15 @@ export function update(
 		events.push({ type: "dash", x: player.x, y: player.y });
 	}
 
-	for (const w of s.warnings) w.delay -= dt;
+	// Slow-time affects everything except the player.
+	const worldDt = s.slow > 0 ? dt * SLOW_FACTOR : dt;
+	s.slow = Math.max(0, s.slow - dt);
+
+	for (const w of s.warnings) w.delay -= worldDt;
 	for (const w of s.warnings) if (w.delay <= 0) s.hazards.push(w.hazard);
 	s.warnings = s.warnings.filter((w) => w.delay > 0);
 
-	s.hazardTimer -= dt;
+	s.hazardTimer -= worldDt;
 	if (s.hazardTimer <= 0) {
 		const hazard = spawnHazard(s.level, player, rng);
 		s.warnings.push({ hazard, delay: WARNING_TIME });
@@ -226,7 +238,7 @@ export function update(
 		s.pickupTimer += PICKUP_INTERVAL;
 	}
 
-	for (const h of s.hazards) moveHazard(h, player, s.level, dt);
+	for (const h of s.hazards) moveHazard(h, player, s.level, worldDt);
 	const splitting = s.hazards.filter(isSplitting);
 	for (const h of splitting) events.push({ type: "split", x: h.x, y: h.y });
 	s.hazards = [...s.hazards.filter(isAlive), ...splitting.flatMap(split)];

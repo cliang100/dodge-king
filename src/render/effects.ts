@@ -58,6 +58,13 @@ const BURSTS: Record<GameEvent["type"], Burst> = {
 		shake: 0,
 		text: "MAGNET",
 	},
+	slow: {
+		count: 14,
+		speed: 140,
+		colors: ["#4cc9f0", "#ffd23f"],
+		shake: 0,
+		text: "SLOW",
+	},
 	block: { count: 18, speed: 200, colors: ["#4cc9f0", "#ffffff"], shake: 6 },
 	hit: {
 		count: 36,

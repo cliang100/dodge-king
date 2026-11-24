@@ -33,6 +33,7 @@ const sounds: Record<GameEvent["type"] | "start", () => void> = {
 	shield: () => tone(330, 0.3, "triangle", 990),
 	dash: () => tone(700, 0.12, "triangle", 200),
 	magnet: () => tone(520, 0.25, "triangle", 260),
+	slow: () => tone(880, 0.5, "sine", 220),
 	split: () => tone(180, 0.2, "square", 60),
 	block: () => tone(220, 0.25, "sawtooth", 110),
 	hit: () => tone(300, 0.7, "sawtooth", 40),

@@ -30,6 +30,7 @@ const COLORS = {
 	overlay: "rgba(10, 9, 18, 0.6)",
 	warning: "#ff4d6d",
 	magnet: "#ff6b6b",
+	slowTint: "rgba(76, 201, 240, 0.12)",
 	laser: "rgba(255, 77, 109, 0.55)",
 	outline: "rgba(10, 9, 18, 0.75)",
 };
@@ -211,6 +212,7 @@ function drawWarning(ctx: CanvasRenderingContext2D, w: Warning) {
 const POWER_UP_SPRITES: Record<PowerUp, sprites.Sprite> = {
 	shield: sprites.shield,
 	magnet: sprites.magnet,
+	slow: sprites.hourglass,
 };
 
 function drawPickup(ctx: CanvasRenderingContext2D, p: Pickup, time: number) {
@@ -283,6 +285,7 @@ function drawHud(ctx: CanvasRenderingContext2D, v: View) {
 
 	const timers: [string, number, string][] = [
 		["MAGNET", v.game.magnet, COLORS.magnet],
+		["SLOW", v.game.slow, COLORS.shield],
 	];
 	ctx.textAlign = "left";
 	let y = 42;
@@ -326,6 +329,10 @@ export function draw(ctx: CanvasRenderingContext2D, v: View) {
 	for (const w of game.warnings) drawWarning(ctx, w);
 	drawEffects(ctx, v.fx);
 	ctx.restore();
+	if (game.slow > 0) {
+		ctx.fillStyle = COLORS.slowTint;
+		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+	}
 	drawHud(ctx, v);
 	if (v.fx.banner > 0) drawBanner(ctx, game.level, v.fx.banner);
 

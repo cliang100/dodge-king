@@ -126,6 +126,22 @@ describe("game", () => {
 		expect(s.pickups.map((p) => p.x)).toEqual([x + 118, x + 300]);
 	});
 
+	it("slow-time halves hazard speed", () => {
+		const s = createGame();
+		s.slow = 5;
+		s.hazards.push({
+			kind: "arrow",
+			x: 100,
+			y: 100,
+			r: 5,
+			vx: 200,
+			vy: 0,
+			ttl: 5,
+		});
+		update(s, idle, 0.1, rng);
+		expect(s.hazards[0]?.x).toBeCloseTo(110);
+	});
+
 	it("uses the shield to absorb one hit", () => {
 		const s = createGame();
 		s.player.shield = true;

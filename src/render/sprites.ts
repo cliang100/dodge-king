@@ -183,6 +183,19 @@ export const magnet = build([
 	"...RRRR...",
 ]);
 
+export const hourglass = build([
+	"nnnnnnnnnn",
+	".CyyyyyyC.",
+	".CCyyyyCC.",
+	"..CCyyCC..",
+	"...CyyC...",
+	"...CCyC...",
+	"..CCCyCC..",
+	".CCCyyCCC.",
+	".CyyyyyyC.",
+	"nnnnnnnnnn",
+]);
+
 export function drawSprite(
 	ctx: CanvasRenderingContext2D,
 	sprite: Sprite,
