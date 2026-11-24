@@ -19,7 +19,7 @@ const LEVEL_TIME = 15;
 export const COIN_POINTS = 50;
 const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
-const SHIELD_CHANCE = 0.12;
+const POWER_UP_CHANCE = 0.2;
 const INVULNERABLE_TIME = 1;
 export const WARNING_TIME = 0.7;
 
@@ -32,8 +32,10 @@ export interface Player extends Circle {
 	dashCooldown: number;
 }
 
+export type PowerUp = "shield";
+
 export interface Pickup extends Circle {
-	kind: "coin" | "shield";
+	kind: "coin" | PowerUp;
 	ttl: number;
 }
 
@@ -50,7 +52,7 @@ export interface Warning {
 }
 
 export interface GameEvent {
-	type: "coin" | "shield" | "block" | "hit" | "level" | "dash" | "split";
+	type: Pickup["kind"] | "block" | "hit" | "level" | "dash" | "split";
 	x: number;
 	y: number;
 }
@@ -131,19 +133,38 @@ function movePlayer(p: Player, input: Input, dt: number): boolean {
 	return dashed;
 }
 
+const isActive: Record<PowerUp, (s: GameState) => boolean> = {
+	shield: (s) => s.player.shield,
+};
+
 function spawnPickup(s: GameState, rng: Rng): Pickup | null {
 	if (s.pickups.length >= MAX_PICKUPS) return null;
-	const canShield =
-		!s.player.shield && !s.pickups.some((p) => p.kind === "shield");
-	const kind = canShield && rng() < SHIELD_CHANCE ? "shield" : "coin";
+	const options = (Object.keys(isActive) as PowerUp[]).filter(
+		(k) => !isActive[k](s) && !s.pickups.some((p) => p.kind === k),
+	);
+	const powerUp =
+		rng() < POWER_UP_CHANCE
+			? options[Math.floor(rng() * options.length)]
+			: null;
 	const m = 40;
 	return {
-		kind,
+		kind: powerUp ?? "coin",
 		x: m + rng() * (WIDTH - 2 * m),
 		y: m + rng() * (HEIGHT - 2 * m),
 		r: 10,
 		ttl: 6,
 	};
+}
+
+function collect(s: GameState, kind: Pickup["kind"]) {
+	switch (kind) {
+		case "coin":
+			s.coins++;
+			break;
+		case "shield":
+			s.player.shield = true;
+			break;
+	}
 }
 
 export function update(
@@ -192,8 +213,7 @@ export function update(
 	s.pickups = s.pickups.filter((p) => {
 		p.ttl -= dt;
 		if (!overlaps(player, p)) return p.ttl > 0;
-		if (p.kind === "coin") s.coins++;
-		else player.shield = true;
+		collect(s, p.kind);
 		events.push({ type: p.kind, x: p.x, y: p.y });
 		return false;
 	});
