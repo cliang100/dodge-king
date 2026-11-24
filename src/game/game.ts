@@ -9,7 +9,7 @@ import { type Circle, HEIGHT, type Rng, WIDTH } from "./world";
 
 const PLAYER_SPEED = 260;
 const LEVEL_TIME = 15;
-const COIN_POINTS = 50;
+export const COIN_POINTS = 50;
 const PICKUP_INTERVAL = 2.5;
 const MAX_PICKUPS = 3;
 const SHIELD_CHANCE = 0.12;
@@ -18,6 +18,7 @@ const INVULNERABLE_TIME = 1;
 export interface Player extends Circle {
 	shield: boolean;
 	invulnerable: number;
+	moving: boolean;
 }
 
 export interface Pickup extends Circle {
@@ -31,7 +32,11 @@ export interface Input {
 	target: { x: number; y: number } | null;
 }
 
-export type GameEvent = "coin" | "shield" | "block" | "hit" | "level";
+export interface GameEvent {
+	type: "coin" | "shield" | "block" | "hit" | "level";
+	x: number;
+	y: number;
+}
 
 export interface GameState {
 	time: number;
@@ -55,6 +60,7 @@ export function createGame(): GameState {
 			r: 14,
 			shield: false,
 			invulnerable: 0,
+			moving: false,
 		},
 		hazards: [],
 		pickups: [],
@@ -76,6 +82,7 @@ function movePlayer(p: Player, input: Input, dt: number) {
 	const dx = input.target ? input.target.x - p.x : input.dx;
 	const dy = input.target ? input.target.y - p.y : input.dy;
 	const len = Math.hypot(dx, dy);
+	p.moving = len > 1;
 	if (len > 0) {
 		const step = PLAYER_SPEED * dt;
 		const k = (input.target ? Math.min(step, len) : step) / len;
@@ -115,7 +122,7 @@ export function update(
 	const level = levelAt(s.time);
 	if (level > s.level) {
 		s.level = level;
-		events.push("level");
+		events.push({ type: "level", x: player.x, y: player.y });
 	}
 
 	movePlayer(player, input, dt);
@@ -141,7 +148,7 @@ export function update(
 		if (!overlaps(player, p)) return p.ttl > 0;
 		if (p.kind === "coin") s.coins++;
 		else player.shield = true;
-		events.push(p.kind);
+		events.push({ type: p.kind, x: p.x, y: p.y });
 		return false;
 	});
 
@@ -152,9 +159,9 @@ export function update(
 		player.shield = false;
 		player.invulnerable = INVULNERABLE_TIME;
 		s.hazards = s.hazards.filter((h) => h !== hit);
-		events.push("block");
+		events.push({ type: "block", x: player.x, y: player.y });
 	} else {
-		events.push("hit");
+		events.push({ type: "hit", x: player.x, y: player.y });
 	}
 	return events;
 }

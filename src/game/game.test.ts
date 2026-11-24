@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	createGame,
+	type GameEvent,
 	type Input,
 	levelAt,
 	overlaps,
@@ -18,6 +19,7 @@ import { HEIGHT, WIDTH } from "./world";
 
 const idle: Input = { dx: 0, dy: 0, target: null };
 const rng = () => 0.5;
+const types = (events: GameEvent[]) => events.map((e) => e.type);
 
 describe("game", () => {
 	it("detects overlapping circles", () => {
@@ -30,7 +32,7 @@ describe("game", () => {
 		expect(levelAt(15)).toBe(2);
 		const s = createGame();
 		s.time = 14.99;
-		expect(update(s, idle, 0.02, rng)).toContain("level");
+		expect(types(update(s, idle, 0.02, rng))).toContain("level");
 		expect(s.level).toBe(2);
 	});
 
@@ -58,7 +60,7 @@ describe("game", () => {
 			r: 10,
 			ttl: 5,
 		});
-		expect(update(s, idle, 0.01, rng)).toContain("coin");
+		expect(types(update(s, idle, 0.01, rng))).toContain("coin");
 		expect(s.coins).toBe(1);
 		expect(s.pickups).toHaveLength(0);
 		expect(scoreOf(s)).toBe(50);
@@ -76,7 +78,7 @@ describe("game", () => {
 			vy: 0,
 			ttl: 5,
 		});
-		const events = update(s, idle, 0.01, rng);
+		const events = types(update(s, idle, 0.01, rng));
 		expect(events).toContain("block");
 		expect(events).not.toContain("hit");
 		expect(s.player.shield).toBe(false);
@@ -94,7 +96,7 @@ describe("game", () => {
 			vy: 0,
 			ttl: 5,
 		});
-		expect(update(s, idle, 0.01, rng)).toContain("hit");
+		expect(types(update(s, idle, 0.01, rng))).toContain("hit");
 	});
 });
 

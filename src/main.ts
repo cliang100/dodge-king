@@ -1,9 +1,18 @@
 import "./style.css";
-import { isMuted, playSound, toggleMute, unlockAudio } from "./audio/sfx";
+import { isMuted, toggleMute, unlockAudio } from "./audio/engine";
+import {
+	isMusicOn,
+	setTempo,
+	startMusic,
+	stopMusic,
+	toggleMusic,
+} from "./audio/music";
+import { playSound } from "./audio/sfx";
 import { createGame, scoreOf, update } from "./game/game";
 import { HEIGHT, WIDTH } from "./game/world";
 import { bindInput } from "./input/input";
 import { draw, type Screen } from "./render/draw";
+import { createEffects, emit, stepEffects } from "./render/effects";
 import { load, save } from "./storage";
 
 const BEST_KEY = "dodge-king:best";
@@ -19,6 +28,9 @@ function getCanvas() {
 const { canvas, ctx } = getCanvas();
 const readInput = bindInput(canvas);
 let game = createGame();
+const fx = createEffects(
+	matchMedia("(prefers-reduced-motion: reduce)").matches,
+);
 let screen: Screen = "title";
 let best = Number(load(BEST_KEY)) || 0;
 let newBest = false;
@@ -35,16 +47,25 @@ function advance() {
 	unlockAudio();
 	if (screen === "paused") {
 		screen = "playing";
+		startMusic(false);
 	} else if (screen !== "playing") {
 		game = createGame();
 		newBest = false;
 		screen = "playing";
 		playSound("start");
+		setTempo(1);
+		startMusic(true);
 	}
+}
+
+function pause() {
+	screen = "paused";
+	stopMusic();
 }
 
 function gameOver() {
 	screen = "over";
+	stopMusic();
 	const score = scoreOf(game);
 	if (score > best) {
 		best = score;
@@ -58,11 +79,23 @@ function frame(now: number) {
 	last = now;
 	if (screen === "playing") {
 		for (const event of update(game, readInput(), dt)) {
-			playSound(event);
-			if (event === "hit") gameOver();
+			playSound(event.type);
+			emit(fx, event);
+			if (event.type === "level") setTempo(game.level);
+			if (event.type === "hit") gameOver();
 		}
 	}
-	draw(ctx, { screen, game, best, newBest, muted: isMuted() });
+	if (screen !== "paused") stepEffects(fx, dt);
+	draw(ctx, {
+		screen,
+		game,
+		best,
+		newBest,
+		muted: isMuted(),
+		music: isMusicOn(),
+		fx,
+		clock: now / 1000,
+	});
 	requestAnimationFrame(frame);
 }
 
@@ -72,10 +105,12 @@ window.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		advance();
 	} else if (e.code === "Escape" || e.code === "KeyP") {
-		if (screen === "playing") screen = "paused";
+		if (screen === "playing") pause();
 		else if (screen === "paused") advance();
 	} else if (e.code === "KeyM") {
 		toggleMute();
+	} else if (e.code === "KeyN") {
+		toggleMusic();
 	}
 });
 
@@ -84,7 +119,7 @@ canvas.addEventListener("pointerdown", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-	if (document.hidden && screen === "playing") screen = "paused";
+	if (document.hidden && screen === "playing") pause();
 });
 
 window.addEventListener("resize", resize);
